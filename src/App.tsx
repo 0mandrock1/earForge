@@ -199,9 +199,19 @@ function useAudio(){
 
   // Async: creates context if needed, awaits resume().
   // iOS Safari requires resume() to fully resolve before scheduling any audio.
+  // Also plays a 1-sample silent buffer on first creation to unlock the iOS audio session.
   const ensureCtx=useCallback(async()=>{
     const AC=window.AudioContext||(window as any).webkitAudioContext;
-    if(!ctxRef.current||ctxRef.current.state==="closed")ctxRef.current=new AC();
+    if(!ctxRef.current||ctxRef.current.state==="closed"){
+      ctxRef.current=new AC();
+      // iOS unlock: playing a silent buffer forces the audio session to activate,
+      // so subsequent oscillator scheduling actually produces sound.
+      try{
+        const buf=ctxRef.current.createBuffer(1,1,ctxRef.current.sampleRate);
+        const src=ctxRef.current.createBufferSource();
+        src.buffer=buf;src.connect(ctxRef.current.destination);src.start(0);
+      }catch(e){}
+    }
     if(ctxRef.current.state!=="running")await ctxRef.current.resume();
     return ctxRef.current;
   },[]);
@@ -240,24 +250,24 @@ function useAudio(){
   },[]);
 
   // Public API — all async so iOS resume() is awaited before scheduling.
-  // 0.05s offset gives the context time to actually start producing output.
+  // 0.15s offset ensures notes are never "in the past" on a fresh iOS context.
   const playNote=useCallback(async(note:string,dur=0.4)=>{
     stopAll();const ctx=await ensureCtx();
-    _tone(ctx,freqFromNote(note),ctx.currentTime+0.05,dur);
+    _tone(ctx,freqFromNote(note),ctx.currentTime+0.15,dur);
   },[stopAll,ensureCtx,_tone]);
 
   const playInterval=useCallback(async(n1:string,n2:string,del=0.5)=>{
-    stopAll();const ctx=await ensureCtx(),t=ctx.currentTime+0.05;
+    stopAll();const ctx=await ensureCtx(),t=ctx.currentTime+0.15;
     _tone(ctx,freqFromNote(n1),t,0.4);_tone(ctx,freqFromNote(n2),t+del,0.4);
   },[stopAll,ensureCtx,_tone]);
 
   const playMetronome=useCallback(async(bpm:number,beats=8)=>{
-    stopAll();const ctx=await ensureCtx(),t=ctx.currentTime+0.05,iv=60/bpm;
+    stopAll();const ctx=await ensureCtx(),t=ctx.currentTime+0.15,iv=60/bpm;
     for(let i=0;i<beats;i++)_click(ctx,t+i*iv);
   },[stopAll,ensureCtx,_click]);
 
   const playProgression=useCallback(async(chords:string[][],tempo=0.7)=>{
-    stopAll();const ctx=await ensureCtx(),t=ctx.currentTime+0.05;
+    stopAll();const ctx=await ensureCtx(),t=ctx.currentTime+0.15;
     chords.forEach((ch,i)=>ch.forEach(n=>_tone(ctx,freqFromNote(n),t+i*tempo,0.55,0.2)));
   },[stopAll,ensureCtx,_tone]);
 
