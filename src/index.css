@@ -1,3 +1,21 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Safari iOS: fill the full viewport height including bottom bar */
+.app-root {
+  min-height: 100vh;
+  min-height: 100dvh; /* dynamic viewport height — hides/shows browser chrome */
+  min-height: -webkit-fill-available; /* iOS Safari 12-14 fallback */
+}
+
+/* Prevent input zoom on iOS Safari (requires font-size >= 16px on inputs) */
+input, select, textarea {
+  font-size: max(16px, 1em);
+}
+
+/* Smooth scrolling and momentum on iOS */
+html {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
