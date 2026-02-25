@@ -161,8 +161,6 @@ const CSS=`
 @keyframes fadeIn{0%{opacity:0}100%{opacity:1}}
 @keyframes fadeOut{0%{opacity:1}100%{opacity:0}}
 @keyframes ripple{0%{transform:scale(1);opacity:.5}100%{transform:scale(2.5);opacity:0}}
-* { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
-input[type=number] { font-size: 16px; }
 `;
 
 // ─── random.org buffer ─────────────────────────────────────────────────────────
@@ -199,63 +197,69 @@ function useAudio(){
   const ctxRef=useRef<AudioContext|null>(null);
   const activeRef=useRef<{osc:OscillatorNode,gain:GainNode}[]>([]);
 
-  const getCtx=useCallback(()=>{
-    // Create/resume AudioContext only inside a user-gesture handler (Safari requirement)
+  // Async: creates context if needed, awaits resume().
+  // iOS Safari requires resume() to fully resolve before scheduling any audio.
+  const ensureCtx=useCallback(async()=>{
     const AC=window.AudioContext||(window as any).webkitAudioContext;
     if(!ctxRef.current||ctxRef.current.state==="closed")ctxRef.current=new AC();
-    if(ctxRef.current.state==="suspended")ctxRef.current.resume();
+    if(ctxRef.current.state!=="running")await ctxRef.current.resume();
     return ctxRef.current;
   },[]);
 
+  // stopAll is sync: just fades out whatever is playing, no context creation.
   const stopAll=useCallback(()=>{
-    const now=getCtx().currentTime;
+    if(!ctxRef.current)return;
+    const now=ctxRef.current.currentTime;
     activeRef.current.forEach(n=>{
       try{n.gain.gain.cancelScheduledValues(now);n.gain.gain.setValueAtTime(n.gain.gain.value,now);n.gain.gain.linearRampToValueAtTime(0,now+0.05);}catch(e){}
     });
     activeRef.current=[];
-  },[getCtx]);
+  },[]);
 
-  const playTone=useCallback((freq:number,startTime:number,duration:number,vol=0.3)=>{
-    const ctx=getCtx();
+  // Internal tone scheduler — receives already-running ctx
+  const _tone=useCallback((ctx:AudioContext,freq:number,t:number,dur:number,vol=0.3)=>{
     const osc=ctx.createOscillator(),gain=ctx.createGain();
     osc.type="triangle";
-    osc.frequency.setValueAtTime(freq,startTime);
-    gain.gain.setValueAtTime(0,startTime);
-    gain.gain.linearRampToValueAtTime(vol,startTime+0.015);
-    gain.gain.setValueAtTime(vol,startTime+duration*0.7);
-    gain.gain.linearRampToValueAtTime(0,startTime+duration);
+    osc.frequency.setValueAtTime(freq,t);
+    gain.gain.setValueAtTime(0,t);
+    gain.gain.linearRampToValueAtTime(vol,t+0.015);
+    gain.gain.setValueAtTime(vol,t+dur*0.7);
+    gain.gain.linearRampToValueAtTime(0,t+dur);
     osc.connect(gain);gain.connect(ctx.destination);
-    osc.start(startTime);osc.stop(startTime+duration+0.1);
+    osc.start(t);osc.stop(t+dur+0.1);
     activeRef.current.push({gain,osc});
     osc.onended=()=>{activeRef.current=activeRef.current.filter(n=>n.osc!==osc);};
-  },[getCtx]);
+  },[]);
 
-  const playClick=useCallback((startTime:number,vol=0.4)=>{
-    const ctx=getCtx(),osc=ctx.createOscillator(),gain=ctx.createGain();
-    osc.type="square";osc.frequency.setValueAtTime(1000,startTime);
-    gain.gain.setValueAtTime(vol,startTime);gain.gain.linearRampToValueAtTime(0,startTime+0.03);
+  const _click=useCallback((ctx:AudioContext,t:number,vol=0.4)=>{
+    const osc=ctx.createOscillator(),gain=ctx.createGain();
+    osc.type="square";osc.frequency.setValueAtTime(1000,t);
+    gain.gain.setValueAtTime(vol,t);gain.gain.linearRampToValueAtTime(0,t+0.03);
     osc.connect(gain);gain.connect(ctx.destination);
-    osc.start(startTime);osc.stop(startTime+0.05);
-  },[getCtx]);
+    osc.start(t);osc.stop(t+0.05);
+  },[]);
 
-  const playNote=useCallback((note:string,dur=0.4)=>{
-    stopAll();const ctx=getCtx();playTone(freqFromNote(note),ctx.currentTime,dur);
-  },[stopAll,getCtx,playTone]);
+  // Public API — all async so iOS resume() is awaited before scheduling.
+  // 0.05s offset gives the context time to actually start producing output.
+  const playNote=useCallback(async(note:string,dur=0.4)=>{
+    stopAll();const ctx=await ensureCtx();
+    _tone(ctx,freqFromNote(note),ctx.currentTime+0.05,dur);
+  },[stopAll,ensureCtx,_tone]);
 
-  const playInterval=useCallback((n1:string,n2:string,del=0.5)=>{
-    stopAll();const ctx=getCtx(),t=ctx.currentTime;
-    playTone(freqFromNote(n1),t,0.4);playTone(freqFromNote(n2),t+del,0.4);
-  },[stopAll,getCtx,playTone]);
+  const playInterval=useCallback(async(n1:string,n2:string,del=0.5)=>{
+    stopAll();const ctx=await ensureCtx(),t=ctx.currentTime+0.05;
+    _tone(ctx,freqFromNote(n1),t,0.4);_tone(ctx,freqFromNote(n2),t+del,0.4);
+  },[stopAll,ensureCtx,_tone]);
 
-  const playMetronome=useCallback((bpm:number,beats=8)=>{
-    stopAll();const ctx=getCtx(),t=ctx.currentTime,iv=60/bpm;
-    for(let i=0;i<beats;i++)playClick(t+i*iv);
-  },[stopAll,getCtx,playClick]);
+  const playMetronome=useCallback(async(bpm:number,beats=8)=>{
+    stopAll();const ctx=await ensureCtx(),t=ctx.currentTime+0.05,iv=60/bpm;
+    for(let i=0;i<beats;i++)_click(ctx,t+i*iv);
+  },[stopAll,ensureCtx,_click]);
 
-  const playProgression=useCallback((chords:string[][],tempo=0.7)=>{
-    stopAll();const ctx=getCtx(),t=ctx.currentTime;
-    chords.forEach((ch,i)=>ch.forEach(n=>playTone(freqFromNote(n),t+i*tempo,0.55,0.2)));
-  },[stopAll,getCtx,playTone]);
+  const playProgression=useCallback(async(chords:string[][],tempo=0.7)=>{
+    stopAll();const ctx=await ensureCtx(),t=ctx.currentTime+0.05;
+    chords.forEach((ch,i)=>ch.forEach(n=>_tone(ctx,freqFromNote(n),t+i*tempo,0.55,0.2)));
+  },[stopAll,ensureCtx,_tone]);
 
   return{playNote,playInterval,playMetronome,playProgression,stopAll};
 }

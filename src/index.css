@@ -2,20 +2,31 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Safari iOS: fill the full viewport height including bottom bar */
+/* ── iOS Safari full-height fix ─────────────────────────────────────────────
+   -webkit-fill-available only works on html/body, NOT on arbitrary divs.
+   We also set --app-height via JS in main.tsx for older iOS.          */
+html, body {
+  height: 100%;
+}
+
+body {
+  /* Fallback chain: dvh (iOS 15.4+) → JS var → 100vh */
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
 .app-root {
   min-height: 100vh;
-  min-height: 100dvh; /* dynamic viewport height — hides/shows browser chrome */
-  min-height: -webkit-fill-available; /* iOS Safari 12-14 fallback */
+  min-height: var(--app-height, 100dvh);
 }
 
-/* Prevent input zoom on iOS Safari (requires font-size >= 16px on inputs) */
+/* ── Prevent input zoom on iOS (font-size < 16px triggers zoom) ────────── */
 input, select, textarea {
-  font-size: max(16px, 1em);
+  font-size: 16px;
 }
 
-/* Smooth scrolling and momentum on iOS */
-html {
-  -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
+/* ── Remove tap flash and double-tap delay on interactive elements ─────── */
+button, a, [role="button"], input, label {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation; /* only on interactive elements, not * */
 }
