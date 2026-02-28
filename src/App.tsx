@@ -76,10 +76,12 @@ const T={
         {icon:"🧠",text:"Співай! Спробуй проспівати почуту ноту. Голос «сідає» легко — знайшов правильну висоту."},
       ]},
       intervals:{title:"🎼 Як чути інтервали",steps:[
-        {icon:"🎬",text:"Прив'яжи до мелодії. м2 — «Jaws», б3 — «Oh When the Saints», ч5 — «Star Wars», окт — «Somewhere Over the Rainbow»."},
-        {icon:"📏",text:"Малі (м2, б2) — «тісно», напружено. Великі (б6, б7) — широко, дистанція."},
-        {icon:"😊",text:"Мажорні (б3, б6) — світло, радісно. Мінорні (м3, м6) — сумно."},
-        {icon:"🎯",text:"Тритон (тт) — нестабільний. Квінта (ч5) — стійка і порожня."},
+        {icon:"🎬",text:"Секунди. м2 (пів тону) — «Jaws» (тема акули, ре–ре#): дуже тісно, тривожно, хроматика. б2 (тон) — «Happy Birthday» перші дві ноти, крок по гамі: природно, спокійно."},
+        {icon:"🎶",text:"Терції — найемоційніші. м3 — «Smoke on the Water» (рифф), «Greensleeves»: сумно, меланхолійно. б3 — «Oh When the Saints», перший стрибок у «Happy Birthday»: радісно, тепло."},
+        {icon:"🎯",text:"Кварта і тритон. ч4 — «Here Comes the Bride», «Amazing Grace» (перший стрибок): чиста, стійка, «пуста». тт — «The Simpsons» тема, «Maria» (West Side Story): нестабільна, тривожна."},
+        {icon:"⭐",text:"Квінта і сексти. ч5 — «Star Wars», «Twinkle Twinkle» (1→5): порожня, героїчна. м6 — «The Entertainer» (Joplin): ніжна, трохи сумна. б6 — «My Way» (Sinatra): широка, піднесена."},
+        {icon:"🌊",text:"Септими й октава. м7 — «Somewhere» (West Side Story): романтична, напружена. б7 — «Take on Me» (A-ha): дуже широка, прагне вгору. окт — «Somewhere Over the Rainbow»: тріумфальний стрибок, максимальна дистанція."},
+        {icon:"💡",text:"Наспівуй! Голос — найкращий тренажер. Починай від знайомої ноти (A4). Нисхідні важчі: «My Bonnie» стартує з нисхідної б6. Якщо сумніваєшся між ч4 і тт — це всього пів тону різниці, вчуйся у стабільність."},
       ]},
       bpm:{title:"🥁 Як ловити темп",steps:[
         {icon:"💓",text:"60 BPM = секунда (пульс у спокої). 120 — швидкий крок. 180 — біг."},
@@ -134,10 +136,12 @@ const T={
         {icon:"🧠",text:"Sing it! Try singing the note you heard. Voice lands easily — you found the right pitch."},
       ]},
       intervals:{title:"🎼 How to hear intervals",steps:[
-        {icon:"🎬",text:"Attach to a melody. m2 — 'Jaws', M3 — 'Oh When the Saints', P5 — 'Star Wars', oct — 'Somewhere Over the Rainbow'."},
-        {icon:"📏",text:"Small (m2, M2) — 'tight', tense. Large (M6, M7) — wide, distant."},
-        {icon:"😊",text:"Major (M3, M6) — bright, happy. Minor (m3, m6) — sad, dark."},
-        {icon:"🎯",text:"Tritone (TT) — unstable, dissonant. Perfect fifth (P5) — stable and open."},
+        {icon:"🎬",text:"Seconds. m2 (half step) — 'Jaws' shark theme (D–D#): creepy, tense, chromatic. M2 (whole step) — first two notes of 'Happy Birthday': natural, stepwise, calm."},
+        {icon:"🎶",text:"Thirds — the most emotional. m3 — 'Smoke on the Water' riff, 'Greensleeves': sad, dark, minor color. M3 — 'Oh When the Saints', first leap in 'Happy Birthday': joyful, warm, major color."},
+        {icon:"🎯",text:"Fourth & tritone. P4 — 'Here Comes the Bride', opening of 'Amazing Grace': pure, strong, resolved. TT — 'The Simpsons' theme, 'Maria' (West Side Story): unstable, tense, wants to move."},
+        {icon:"⭐",text:"Fifth & sixths. P5 — 'Star Wars', 'Twinkle Twinkle' (note 1→5): open, heroic, hollow. m6 — 'The Entertainer' (Joplin): gentle, wistful. M6 — 'My Way' (Sinatra): wide, soaring, triumphant."},
+        {icon:"🌊",text:"Sevenths & octave. m7 — 'Somewhere' (West Side Story): romantic, expansive. M7 — 'Take on Me' (A-ha): very wide, unstable, reaching upward. oct — 'Somewhere Over the Rainbow': maximum distance, triumphant leap."},
+        {icon:"💡",text:"Sing every interval — your voice is the best ear-training tool! Anchor from A4. Descending intervals are harder: 'My Bonnie Lies Over the Ocean' opens with a descending M6. When unsure between P4 and TT — it's just a half step; feel the stability."},
       ]},
       bpm:{title:"🥁 How to catch the tempo",steps:[
         {icon:"💓",text:"60 BPM = 1 second (resting pulse). 120 — brisk walk. 180 — running."},
