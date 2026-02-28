@@ -17,6 +17,8 @@ const INTERVALS={
   ],
 };
 const EASY_IV=[1,3,4,7,12]; // semitone counts for easy difficulty
+type Dir="asc"|"desc"|"harm";
+const ALL_DIRS:Dir[]=["asc","desc","harm"];
 const MAJOR=[0,4,7],MINOR=[0,3,7];
 const XP_PER_LEVEL=200;
 
@@ -62,6 +64,7 @@ const T={
       nicknameRequired:"Введи нікнейм",
       leaderboard:"Таблиця лідерів",noEntries:"Поки немає записів",
       accuracy:"Точність",close:"Закрити",logout:"Вийти",
+      dirAsc:"↑ Висхідний",dirDesc:"↓ Спадний",dirHarm:"♩ Гармонічний",volume:"Гучність",
     },
     questions:{noteId:"Яка це нота?",intervals:"Який інтервал?",bpm:"Який темп?",key:"Яка тональність?"},
     streakMsgs:["","","Непогано!","Вогонь!","Майстер!","На хвилі!","Неймовірно!","Легенда!","GODLIKE!","UNSTOPPABLE!"],
@@ -119,6 +122,7 @@ const T={
       nicknameRequired:"Enter a nickname",
       leaderboard:"Leaderboard",noEntries:"No entries yet",
       accuracy:"Accuracy",close:"Close",logout:"Log out",
+      dirAsc:"↑ Ascending",dirDesc:"↓ Descending",dirHarm:"♩ Harmonic",volume:"Volume",
     },
     questions:{noteId:"What note is this?",intervals:"What interval?",bpm:"What's the tempo?",key:"What key is this?"},
     streakMsgs:["","","Not bad!","On fire!","Master!","In the zone!","Incredible!","Legend!","GODLIKE!","UNSTOPPABLE!"],
@@ -172,6 +176,7 @@ const CSS=`
 @keyframes fadeOut{0%{opacity:1}100%{opacity:0}}
 @keyframes ripple{0%{transform:scale(1);opacity:.5}100%{transform:scale(2.5);opacity:0}}
 `;
+const audioVol={v:parseFloat(localStorage.getItem("earforge-vol")||"1")};
 
 // ─── random.org buffer ─────────────────────────────────────────────────────────
 // Fills a buffer with true random floats [0,1) from random.org.
@@ -242,8 +247,8 @@ function useAudio(){
     osc.type="triangle";
     osc.frequency.setValueAtTime(freq,t);
     gain.gain.setValueAtTime(0,t);
-    gain.gain.linearRampToValueAtTime(vol,t+0.015);
-    gain.gain.setValueAtTime(vol,t+dur*0.7);
+    gain.gain.linearRampToValueAtTime(vol*audioVol.v,t+0.015);
+    gain.gain.setValueAtTime(vol*audioVol.v,t+dur*0.7);
     gain.gain.linearRampToValueAtTime(0,t+dur);
     osc.connect(gain);gain.connect(ctx.destination);
     osc.start(t);osc.stop(t+dur+0.1);
@@ -254,7 +259,7 @@ function useAudio(){
   const _click=useCallback((ctx:AudioContext,t:number,vol=0.4)=>{
     const osc=ctx.createOscillator(),gain=ctx.createGain();
     osc.type="square";osc.frequency.setValueAtTime(1000,t);
-    gain.gain.setValueAtTime(vol,t);gain.gain.linearRampToValueAtTime(0,t+0.03);
+    gain.gain.setValueAtTime(vol*audioVol.v,t);gain.gain.linearRampToValueAtTime(0,t+0.03);
     osc.connect(gain);gain.connect(ctx.destination);
     osc.start(t);osc.stop(t+0.05);
   },[]);
@@ -281,7 +286,12 @@ function useAudio(){
     chords.forEach((ch,i)=>ch.forEach(n=>_tone(ctx,freqFromNote(n),t+i*tempo,0.55,0.2)));
   },[stopAll,ensureCtx,_tone]);
 
-  return{playNote,playInterval,playMetronome,playProgression,stopAll};
+  const playHarmonic=useCallback(async(n1:string,n2:string)=>{
+    stopAll();const ctx=await ensureCtx(),t=ctx.currentTime+0.15;
+    _tone(ctx,freqFromNote(n1),t,0.6,0.25);_tone(ctx,freqFromNote(n2),t,0.6,0.25);
+  },[stopAll,ensureCtx,_tone]);
+
+  return{playNote,playInterval,playHarmonic,playMetronome,playProgression,stopAll};
 }
 
 // ─── Storage ───────────────────────────────────────────────────────────────────
@@ -445,6 +455,12 @@ function Header({state,dispatch}:{state:typeof initState,dispatch:React.Dispatch
         </div>
       </div>
       <XpBar xp={state.xp} level={state.level}/>
+      <div className="flex items-center gap-2 w-full max-w-md">
+        <span className="text-purple-400 text-xs">🔊</span>
+        <input type="range" min="0" max="1" step="0.05" defaultValue={String(audioVol.v)}
+          onChange={e=>{audioVol.v=parseFloat(e.target.value);localStorage.setItem("earforge-vol",e.target.value);}}
+          className="flex-1 h-1 cursor-pointer accent-purple-400"/>
+      </div>
       {msg&&state.streak>=2&&<div className="text-xs font-bold" style={{color:"#fbbf24",animation:"slideUp .3s ease-out"}}>{msg}</div>}
     </div>
   );
@@ -471,6 +487,21 @@ function useGameFB(streak:number,dispatch:React.Dispatch<any>){
     onBad:useCallback(()=>{setFlash("wrong");dispatch({type:"WRONG"});},[dispatch]),
     reset:useCallback(()=>setFlash(null),[]),
   };
+}
+
+// Keyboard shortcuts: Space=replay, Enter=next/submit. Uses refs so callbacks are always fresh.
+function useGameKeys(onSpace:()=>void,onEnter:()=>void){
+  const spRef=useRef(onSpace),enRef=useRef(onEnter);
+  spRef.current=onSpace;enRef.current=onEnter;
+  useEffect(()=>{
+    const h=(e:KeyboardEvent)=>{
+      if(e.target instanceof HTMLInputElement||e.target instanceof HTMLTextAreaElement)return;
+      if(e.code==="Space"){e.preventDefault();spRef.current();}
+      else if(e.code==="Enter"){e.preventDefault();enRef.current();}
+    };
+    window.addEventListener("keydown",h);
+    return()=>window.removeEventListener("keydown",h);
+  },[]);
 }
 
 function GWrap({flash,floats,sPop,ptrig,streak,children}:any){
@@ -621,7 +652,13 @@ function NoteIdMode({audio,dispatch,streak,diff}:any){
   const lastAnsRef=useRef<string|null>(null);
   const newR=()=>{const fp=lastAnsRef.current?pool.filter(x=>x!==lastAnsRef.current):pool;const a=pick(fp.length>0?fp:pool),o=pick(octs);lastAnsRef.current=a;return{ans:a,opts:pickOpts(a,pool,nOpts),note:a+o,picked:null};};
   const [r,setR]=useState(newR);const [lk,setLk]=useState(false);
+  const rRef=useRef(r);rRef.current=r;
+  const lkRef=useRef(lk);lkRef.current=lk;
   const meta=MODES_META[0];
+  // Auto-play on mount
+  useEffect(()=>{audio.playNote(rRef.current.note);},[]);// eslint-disable-line
+  const goNext=()=>{if(!lkRef.current)return;const n=newR();setR(n);setLk(false);fb.reset();setTimeout(()=>audio.playNote(n.note),100);};// eslint-disable-line
+  useGameKeys(()=>audio.playNote(rRef.current.note),goNext);
   return(
     <GWrap {...fb} streak={streak}>
       <div className="absolute top-4 left-4"><A4Btn audio={audio}/></div>
@@ -630,7 +667,11 @@ function NoteIdMode({audio,dispatch,streak,diff}:any){
       <Btn onClick={()=>audio.playNote(r.note)} label={t.ui.listen} color={meta.btn}/>
       <OptGrid opts={r.opts} picked={r.picked} ans={r.ans} locked={lk} cols={nOpts>4?3:2}
         onPick={(v:string)=>{if(lk)return;setLk(true);setR(p=>({...p,picked:v}));v===r.ans?fb.onOk():fb.onBad();}}/>
-      {lk&&<NextBtn onClick={()=>{const n=newR();setR(n);setLk(false);fb.reset();setTimeout(()=>audio.playNote(n.note),100);}} color={meta.btn}/>}
+      {lk&&<div className="flex flex-col items-center gap-2">
+        <button onClick={()=>audio.playNote(r.note)} className="px-4 py-1.5 rounded-xl text-white text-sm font-bold"
+          style={{backgroundColor:"rgba(255,255,255,.12)",border:"1px solid rgba(255,255,255,.2)"}}>🔊 {t.ui.listen}</button>
+        <NextBtn onClick={goNext} color={meta.btn}/>
+      </div>}
     </GWrap>
   );
 }
@@ -643,19 +684,38 @@ function IntervalsMode({audio,dispatch,streak,diff}:any){
   const names=ivPool.map(i=>i.name);
   const nOpts=diff==="easy"?3:diff==="medium"?4:6;
   const lastAnsRef=useRef<string|null>(null);
-  const newR=()=>{const fp=lastAnsRef.current?ivPool.filter(i=>i.name!==lastAnsRef.current):ivPool;const iv=pick(fp.length>0?fp:ivPool),root=pick(NOTES);lastAnsRef.current=iv.name;return{ans:iv.name,opts:pickOpts(iv.name,names,nOpts),n1:root+"4",n2:noteAt(root,4,iv.st),picked:null};};
+  const newR=()=>{const fp=lastAnsRef.current?ivPool.filter(i=>i.name!==lastAnsRef.current):ivPool;const iv=pick(fp.length>0?fp:ivPool),root=pick(NOTES);lastAnsRef.current=iv.name;return{ans:iv.name,opts:pickOpts(iv.name,names,nOpts),n1:root+"4",n2:noteAt(root,4,iv.st),dir:pick(ALL_DIRS),picked:null};};
   const [r,setR]=useState(newR);const [lk,setLk]=useState(false);
-  // Reset round when language changes (interval names change)
-  useEffect(()=>{setR(newR());setLk(false);fb.reset();},[lang]); // eslint-disable-line
+  const rRef=useRef(r);rRef.current=r;
+  const lkRef=useRef(lk);lkRef.current=lk;
+  const playR=(round:typeof r)=>{
+    if(round.dir==="harm")audio.playHarmonic(round.n1,round.n2);
+    else if(round.dir==="desc")audio.playInterval(round.n2,round.n1);
+    else audio.playInterval(round.n1,round.n2);
+  };
+  // On mount: auto-play. On lang change: reset round (skip on mount with ref).
+  const mountRef=useRef(true);
+  useEffect(()=>{
+    if(mountRef.current){mountRef.current=false;playR(rRef.current);return;}
+    const n=newR();setR(n);setLk(false);fb.reset();setTimeout(()=>playR(n),100);
+  },[lang]);// eslint-disable-line
+  const goNext=()=>{if(!lkRef.current)return;const n=newR();setR(n);setLk(false);fb.reset();setTimeout(()=>playR(n),100);};// eslint-disable-line
+  useGameKeys(()=>playR(rRef.current),goNext);
+  const dirLabel=(t.ui as any)[r.dir==="asc"?"dirAsc":r.dir==="desc"?"dirDesc":"dirHarm"];
   const meta=MODES_META[1];
   return(
     <GWrap {...fb} streak={streak}>
       <span style={{fontSize:40}}>🎼</span>
       <h2 className="text-lg font-bold text-white">{t.questions.intervals}</h2>
-      <Btn onClick={()=>audio.playInterval(r.n1,r.n2)} label={t.ui.listen} color={meta.btn}/>
+      <div className="text-xs font-bold px-2 py-0.5 rounded-full" style={{backgroundColor:"rgba(8,145,178,.25)",color:"#67e8f9"}}>{dirLabel}</div>
+      <Btn onClick={()=>playR(r)} label={t.ui.listen} color={meta.btn}/>
       <OptGrid opts={r.opts} picked={r.picked} ans={r.ans} locked={lk} cols={nOpts>4?3:2}
         onPick={(v:string)=>{if(lk)return;setLk(true);setR(p=>({...p,picked:v}));v===r.ans?fb.onOk():fb.onBad();}}/>
-      {lk&&<NextBtn onClick={()=>{const n=newR();setR(n);setLk(false);fb.reset();setTimeout(()=>audio.playInterval(n.n1,n.n2),100);}} color={meta.btn}/>}
+      {lk&&<div className="flex flex-col items-center gap-2">
+        <button onClick={()=>playR(r)} className="px-4 py-1.5 rounded-xl text-white text-sm font-bold"
+          style={{backgroundColor:"rgba(255,255,255,.12)",border:"1px solid rgba(255,255,255,.2)"}}>🔊 {t.ui.listen}</button>
+        <NextBtn onClick={goNext} color={meta.btn}/>
+      </div>}
     </GWrap>
   );
 }
@@ -694,6 +754,7 @@ function BpmMode({audio,dispatch,streak,diff}:any){
       return arr;
     });
   };
+  useGameKeys(play,()=>{if(res)startNew();else submit();});
 
   return(
     <GWrap {...fb} streak={streak}>
@@ -774,7 +835,13 @@ function KeyMode({audio,dispatch,streak,diff}:any){
   const lastAnsRef=useRef<string|null>(null);
   const nextRound=useCallback(()=>{const n=newKeyRound(diff,lastAnsRef.current);lastAnsRef.current=n.ans;return n;},[diff]);
   const [r,setR]=useState(nextRound);const [lk,setLk]=useState(false);
+  const rRef=useRef(r);rRef.current=r;
+  const lkRef=useRef(lk);lkRef.current=lk;
   const meta=MODES_META[3];
+  // Auto-play on mount
+  useEffect(()=>{audio.playProgression(rRef.current.chords,.7);},[]);// eslint-disable-line
+  const goNext=()=>{if(!lkRef.current)return;const n=nextRound();setR(n);setLk(false);fb.reset();setTimeout(()=>audio.playProgression(n.chords,.7),100);};// eslint-disable-line
+  useGameKeys(()=>audio.playProgression(rRef.current.chords,.7),goNext);
   return(
     <GWrap {...fb} streak={streak}>
       <span style={{fontSize:40}}>🎹</span>
@@ -782,7 +849,11 @@ function KeyMode({audio,dispatch,streak,diff}:any){
       <Btn onClick={()=>audio.playProgression(r.chords,.7)} label={t.ui.listen} color={meta.btn}/>
       <OptGrid opts={r.opts} picked={r.picked} ans={r.ans} locked={lk} cols={r.nOpts>4?3:2}
         onPick={(v:string)=>{if(lk)return;setLk(true);setR(p=>({...p,picked:v}));v===r.ans?fb.onOk():fb.onBad();}}/>
-      {lk&&<NextBtn onClick={()=>{const n=nextRound();setR(n);setLk(false);fb.reset();setTimeout(()=>audio.playProgression(n.chords,.7),100);}} color={meta.btn}/>}
+      {lk&&<div className="flex flex-col items-center gap-2">
+        <button onClick={()=>audio.playProgression(r.chords,.7)} className="px-4 py-1.5 rounded-xl text-white text-sm font-bold"
+          style={{backgroundColor:"rgba(255,255,255,.12)",border:"1px solid rgba(255,255,255,.2)"}}>🔊 {t.ui.listen}</button>
+        <NextBtn onClick={goNext} color={meta.btn}/>
+      </div>}
     </GWrap>
   );
 }
@@ -876,7 +947,7 @@ async function localLeaderboard():Promise<LBData>{
   return result;
 }
 
-function LeaderboardModal({onClose}:{onClose:()=>void}){
+function LeaderboardModal({onClose,currentNick}:{onClose:()=>void,currentNick?:string}){
   const t=useT();
   const [data,setData]=useState<LBData|null>(null);
   const [isRemote,setIsRemote]=useState(false);
@@ -912,9 +983,9 @@ function LeaderboardModal({onClose}:{onClose:()=>void}){
                 :<div className="flex flex-col gap-1">
                   {entries.map((e,i)=>(
                     <div key={e.nick} className="flex items-center gap-2 px-3 py-2 rounded-xl"
-                      style={{backgroundColor:i===0?"rgba(251,191,36,.12)":"rgba(255,255,255,.06)"}}>
+                      style={{backgroundColor:i===0?"rgba(251,191,36,.12)":e.nick===currentNick?"rgba(167,139,250,.15)":"rgba(255,255,255,.06)"}}>
                       <span className="font-bold text-sm w-5" style={{color:i===0?"#fbbf24":i===1?"#d1d5db":"#a78bfa"}}>{i+1}.</span>
-                      <span className="text-white text-sm flex-1 truncate">{e.nick}</span>
+                      <span className="text-sm flex-1 truncate" style={{color:e.nick===currentNick?"#c4b5fd":"white"}}>{e.nick}{e.nick===currentNick?" ◀":""}</span>
                       <span className="text-green-400 text-xs font-bold">{e.pct}%</span>
                       <span className="text-xs" style={{color:"#fbbf24"}}>🔥{e.best}</span>
                       <span className="text-purple-400 text-xs">{e.ok}/{e.total}</span>
@@ -942,7 +1013,7 @@ function Menu({dispatch,stats,bestStreak,nickname}:any){
   return(
     <div className="flex-1 flex flex-col items-center justify-center px-4 gap-4 pb-8" style={{animation:"fadeIn .4s"}}>
       <style>{CSS}</style>
-      {showLB&&<LeaderboardModal onClose={()=>setShowLB(false)}/>}
+      {showLB&&<LeaderboardModal onClose={()=>setShowLB(false)} currentNick={nickname}/>}
       {nickname&&<div className="text-purple-300 text-sm font-bold">👤 {nickname}</div>}
       <h2 className="text-2xl font-bold text-white mb-1">{t.ui.chooseMode}</h2>
       <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
