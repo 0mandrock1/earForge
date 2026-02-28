@@ -38,9 +38,9 @@ export default async function handler(req: any, res: any) {
       const result: Record<string, Array<{ nick: string } & Entry>> = {};
       await Promise.all(
         MODES.map(async (mode) => {
-          const raw = (await redis.hgetall<Record<string, string>>(`lb:${mode}`)) ?? {};
+          const raw = (await redis.hgetall<Record<string, Entry>>(`lb:${mode}`)) ?? {};
           result[mode] = Object.entries(raw)
-            .map(([nick, v]) => ({ nick, ...(JSON.parse(v) as Entry) }))
+            .map(([nick, v]) => ({ nick, ...v }))
             .filter((e) => e.total > 0)
             .sort((a, b) => b.pct - a.pct || b.best - a.best)
             .slice(0, 10);
@@ -69,7 +69,7 @@ export default async function handler(req: any, res: any) {
             pct: Math.round((s.ok / s.total) * 100),
             best: bestStreak ?? 0,
           };
-          await redis.hset(`lb:${mode}`, { [safeNick]: JSON.stringify(entry) });
+          await redis.hset(`lb:${mode}`, { [safeNick]: entry });
         })
       );
       return res.json({ ok: true });
