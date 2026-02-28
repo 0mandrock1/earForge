@@ -57,6 +57,11 @@ const T={
       higher:"⬆️ Більше! Темп швидший",lower:"⬇️ Менше! Темп повільніший",
       playMajor:"♩ Мажор",playMinor:"♩ Мінор",playCadence:"🔊 I-IV-V-I",
       tapToClose:"(натисни щоб закрити)",
+      enterNickname:"Нікнейм",enterPassword:"Пароль (необов'язково)",
+      loginBtn:"Увійти / Зареєструватись",wrongPassword:"Невірний пароль",
+      nicknameRequired:"Введи нікнейм",
+      leaderboard:"Таблиця лідерів",noEntries:"Поки немає записів",
+      accuracy:"Точність",close:"Закрити",logout:"Вийти",
     },
     questions:{noteId:"Яка це нота?",intervals:"Який інтервал?",bpm:"Який темп?",key:"Яка тональність?"},
     streakMsgs:["","","Непогано!","Вогонь!","Майстер!","На хвилі!","Неймовірно!","Легенда!","GODLIKE!","UNSTOPPABLE!"],
@@ -109,6 +114,11 @@ const T={
       higher:"⬆️ Higher! Tempo is faster",lower:"⬇️ Lower! Tempo is slower",
       playMajor:"♩ Major",playMinor:"♩ Minor",playCadence:"🔊 I-IV-V-I",
       tapToClose:"(tap to close)",
+      enterNickname:"Nickname",enterPassword:"Password (optional)",
+      loginBtn:"Log In / Register",wrongPassword:"Wrong password",
+      nicknameRequired:"Enter a nickname",
+      leaderboard:"Leaderboard",noEntries:"No entries yet",
+      accuracy:"Accuracy",close:"Close",logout:"Log out",
     },
     questions:{noteId:"What note is this?",intervals:"What interval?",bpm:"What's the tempo?",key:"What key is this?"},
     streakMsgs:["","","Not bad!","On fire!","Master!","In the zone!","Incredible!","Legend!","GODLIKE!","UNSTOPPABLE!"],
@@ -281,6 +291,14 @@ async function saveP(d:unknown){try{localStorage.setItem(SK,JSON.stringify(d))}c
 async function loadSkips(){try{const v=localStorage.getItem(TK);return v?JSON.parse(v):{}}catch{return{}}}
 async function saveSkips(d:unknown){try{localStorage.setItem(TK,JSON.stringify(d))}catch{}}
 
+// ─── Profile Storage ────────────────────────────────────────────────────────────
+const PK2="earforge-profiles",UK="earforge-active-user";
+type ProfileData={password:string,xp:number,level:number,streak:number,bestStreak:number,stats:{[k:string]:{ok:number,total:number}}};
+async function loadProfiles():Promise<{[k:string]:ProfileData}>{try{const v=localStorage.getItem(PK2);return v?JSON.parse(v):{}}catch{return{}}}
+async function saveProfiles(d:{[k:string]:ProfileData}){try{localStorage.setItem(PK2,JSON.stringify(d))}catch{}}
+function getActiveUser():string|null{return localStorage.getItem(UK);}
+function setActiveUser(n:string|null){if(n)localStorage.setItem(UK,n);else localStorage.removeItem(UK);}
+
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 function shuffle<T>(a:T[]):T[]{const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(randBuf.get()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
 function pickOpts(c:string,pool:string[],n=4){const s=new Set([c]);for(const x of shuffle(pool.filter(v=>v!==c))){if(s.size>=n)break;s.add(x)}return shuffle([...s])}
@@ -291,7 +309,7 @@ function randInt(a:number,b:number){return Math.floor(randBuf.get()*(b-a+1))+a}
 function pick<T>(arr:T[]):T{return arr[Math.floor(randBuf.get()*arr.length)]}
 
 // ─── Reducer ───────────────────────────────────────────────────────────────────
-const initState={screen:"menu",xp:0,level:1,streak:0,bestStreak:0,
+const initState={screen:"login",nickname:"",xp:0,level:1,streak:0,bestStreak:0,
   stats:{noteId:{ok:0,total:0},intervals:{ok:0,total:0},bpm:{ok:0,total:0},key:{ok:0,total:0}},
   loaded:false,lvlUp:false};
 
@@ -309,6 +327,8 @@ function reducer(st:typeof initState,a:any){
     case "WRONG":{const mode=st.screen,ms=(st.stats as any)[mode]||{ok:0,total:0};
       return{...st,streak:0,stats:{...st.stats,[mode]:{ok:ms.ok,total:ms.total+1}},lvlUp:false};}
     case "CLR_LVL":return{...st,lvlUp:false};
+    case "SET_USER":return{...st,...(a.data||{}),nickname:a.nickname,screen:"menu",loaded:true,lvlUp:false};
+    case "LOGOUT":{setActiveUser(null);return{...initState,screen:"login",loaded:true};}
     default:return st;
   }
 }
@@ -598,7 +618,8 @@ function NoteIdMode({audio,dispatch,streak,diff}:any){
   const pool=diff==="easy"?NAT_NOTES:NOTES;
   const nOpts=diff==="easy"?3:diff==="medium"?4:6;
   const octs=diff==="hard"?[3,4,5]:[4];
-  const newR=()=>{const a=pick(pool),o=pick(octs);return{ans:a,opts:pickOpts(a,pool,nOpts),note:a+o,picked:null};};
+  const lastAnsRef=useRef<string|null>(null);
+  const newR=()=>{const fp=lastAnsRef.current?pool.filter(x=>x!==lastAnsRef.current):pool;const a=pick(fp.length>0?fp:pool),o=pick(octs);lastAnsRef.current=a;return{ans:a,opts:pickOpts(a,pool,nOpts),note:a+o,picked:null};};
   const [r,setR]=useState(newR);const [lk,setLk]=useState(false);
   const meta=MODES_META[0];
   return(
@@ -621,7 +642,8 @@ function IntervalsMode({audio,dispatch,streak,diff}:any){
   const ivPool=diff==="easy"?allIntervals.filter(i=>EASY_IV.includes(i.st)):allIntervals;
   const names=ivPool.map(i=>i.name);
   const nOpts=diff==="easy"?3:diff==="medium"?4:6;
-  const newR=()=>{const iv=pick(ivPool),root=pick(NOTES);return{ans:iv.name,opts:pickOpts(iv.name,names,nOpts),n1:root+"4",n2:noteAt(root,4,iv.st),picked:null};};
+  const lastAnsRef=useRef<string|null>(null);
+  const newR=()=>{const fp=lastAnsRef.current?ivPool.filter(i=>i.name!==lastAnsRef.current):ivPool;const iv=pick(fp.length>0?fp:ivPool),root=pick(NOTES);lastAnsRef.current=iv.name;return{ans:iv.name,opts:pickOpts(iv.name,names,nOpts),n1:root+"4",n2:noteAt(root,4,iv.st),picked:null};};
   const [r,setR]=useState(newR);const [lk,setLk]=useState(false);
   // Reset round when language changes (interval names change)
   useEffect(()=>{setR(newR());setLk(false);fb.reset();},[lang]); // eslint-disable-line
@@ -736,18 +758,22 @@ function BpmMode({audio,dispatch,streak,diff}:any){
   );
 }
 
-function newKeyRound(diff:string){
-  const root=pick(NOTES),isMin=diff==="easy"?false:randBuf.get()>.5;
-  const label=root+(isMin?" min":" maj"),ct=isMin?MINOR:MAJOR,ri=NOTES.indexOf(root);
-  const chords=[buildChord(root,3,ct),buildChord(NOTES[(ri+5)%12],3,isMin?MINOR:MAJOR),buildChord(NOTES[(ri+7)%12],3,MAJOR),buildChord(root,3,ct)];
-  const pool=diff==="easy"?NOTES.map(k=>k+" maj"):NOTES.flatMap(k=>[k+" maj",k+" min"]);
+function newKeyRound(diff:string,exclude:string|null=null){
+  const keyPool=diff==="easy"?NOTES.map(k=>k+" maj"):NOTES.flatMap(k=>[k+" maj",k+" min"]);
   const nOpts=diff==="easy"?3:diff==="medium"?4:6;
-  return{ans:label,opts:pickOpts(label,pool,nOpts),chords,picked:null,nOpts};
+  const fp=exclude?keyPool.filter(l=>l!==exclude):keyPool;
+  const label=pick(fp.length>0?fp:keyPool);
+  const isMin=label.endsWith(" min"),root=label.replace(/ (maj|min)$/,"");
+  const ct=isMin?MINOR:MAJOR,ri=NOTES.indexOf(root);
+  const chords=[buildChord(root,3,ct),buildChord(NOTES[(ri+5)%12],3,isMin?MINOR:MAJOR),buildChord(NOTES[(ri+7)%12],3,MAJOR),buildChord(root,3,ct)];
+  return{ans:label,opts:pickOpts(label,keyPool,nOpts),chords,picked:null,nOpts};
 }
 
 function KeyMode({audio,dispatch,streak,diff}:any){
   const t=useT();const fb=useGameFB(streak,dispatch);
-  const [r,setR]=useState(()=>newKeyRound(diff));const [lk,setLk]=useState(false);
+  const lastAnsRef=useRef<string|null>(null);
+  const nextRound=useCallback(()=>{const n=newKeyRound(diff,lastAnsRef.current);lastAnsRef.current=n.ans;return n;},[diff]);
+  const [r,setR]=useState(nextRound);const [lk,setLk]=useState(false);
   const meta=MODES_META[3];
   return(
     <GWrap {...fb} streak={streak}>
@@ -756,7 +782,7 @@ function KeyMode({audio,dispatch,streak,diff}:any){
       <Btn onClick={()=>audio.playProgression(r.chords,.7)} label={t.ui.listen} color={meta.btn}/>
       <OptGrid opts={r.opts} picked={r.picked} ans={r.ans} locked={lk} cols={r.nOpts>4?3:2}
         onPick={(v:string)=>{if(lk)return;setLk(true);setR(p=>({...p,picked:v}));v===r.ans?fb.onOk():fb.onBad();}}/>
-      {lk&&<NextBtn onClick={()=>{const n=newKeyRound(diff);setR(n);setLk(false);fb.reset();setTimeout(()=>audio.playProgression(n.chords,.7),100);}} color={meta.btn}/>}
+      {lk&&<NextBtn onClick={()=>{const n=nextRound();setR(n);setLk(false);fb.reset();setTimeout(()=>audio.playProgression(n.chords,.7),100);}} color={meta.btn}/>}
     </GWrap>
   );
 }
@@ -772,15 +798,125 @@ function ModeScreen({modeId,audio,dispatch,streak}:any){
   return <C audio={audio} dispatch={dispatch} streak={streak} diff={diff}/>;
 }
 
-// ─── Menu ──────────────────────────────────────────────────────────────────────
-function Menu({dispatch,stats,bestStreak}:any){
+// ─── Login Screen ──────────────────────────────────────────────────────────────
+function LoginScreen({dispatch}:{dispatch:React.Dispatch<any>}){
   const t=useT();
+  const [nick,setNick]=useState("");
+  const [pass,setPass]=useState("");
+  const [err,setErr]=useState("");
+  const onLogin=async()=>{
+    const n=nick.trim();
+    if(!n){setErr(t.ui.nicknameRequired);return;}
+    const profiles=await loadProfiles();
+    if(profiles[n]){
+      if(profiles[n].password&&profiles[n].password!==pass){setErr(t.ui.wrongPassword);return;}
+      setActiveUser(n);
+      const{password:_,...data}=profiles[n];
+      dispatch({type:"SET_USER",nickname:n,data});
+    } else {
+      const old=await loadP();
+      const defaults={xp:0,level:1,streak:0,bestStreak:0,stats:{noteId:{ok:0,total:0},intervals:{ok:0,total:0},bpm:{ok:0,total:0},key:{ok:0,total:0}}};
+      const newProf:ProfileData={password:pass,...defaults,...(old||{})};
+      profiles[n]=newProf;
+      await saveProfiles(profiles);
+      setActiveUser(n);
+      const{password:_,...data}=newProf;
+      dispatch({type:"SET_USER",nickname:n,data});
+    }
+  };
+  return(
+    <div className="flex-1 flex flex-col items-center justify-center px-4 gap-5 pb-8 relative" style={{animation:"fadeIn .4s"}}>
+      <style>{CSS}</style>
+      <div className="absolute top-4 right-4"><LangToggle/></div>
+      <span style={{fontSize:56}}>🎧</span>
+      <h1 className="text-3xl font-bold text-white tracking-tight">EarForge</h1>
+      <div className="w-full max-w-xs flex flex-col gap-3">
+        <input value={nick} onChange={e=>{setNick(e.target.value);setErr("");}}
+          placeholder={t.ui.enterNickname} autoCapitalize="none" autoCorrect="off"
+          className="w-full py-3 px-4 rounded-xl text-white font-bold text-center outline-none"
+          style={{backgroundColor:"rgba(255,255,255,.1)",border:"2px solid rgba(167,139,250,.3)",fontSize:16}}
+          onKeyDown={e=>{if(e.key==="Enter")onLogin();}}
+        />
+        <input type="password" value={pass} onChange={e=>{setPass(e.target.value);setErr("");}}
+          placeholder={t.ui.enterPassword}
+          className="w-full py-3 px-4 rounded-xl text-white text-center outline-none"
+          style={{backgroundColor:"rgba(255,255,255,.08)",border:"2px solid rgba(255,255,255,.1)",fontSize:16}}
+          onKeyDown={e=>{if(e.key==="Enter")onLogin();}}
+        />
+        {err&&<div className="text-red-400 text-sm text-center" style={{animation:"slideUp .3s ease-out"}}>{err}</div>}
+        <button onClick={onLogin}
+          className="w-full py-3 rounded-xl text-white font-bold text-base hover:scale-105 active:scale-95 transition-transform"
+          style={{background:"linear-gradient(135deg,#7c3aed,#6d28d9)"}}>
+          {t.ui.loginBtn}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Leaderboard Modal ─────────────────────────────────────────────────────────
+function LeaderboardModal({onClose}:{onClose:()=>void}){
+  const t=useT();
+  const [profiles,setProfiles]=useState<{[k:string]:ProfileData}>({});
+  useEffect(()=>{loadProfiles().then(setProfiles);},[]);
+  return(
+    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{backgroundColor:"rgba(0,0,0,.75)"}}>
+      <div className="w-full max-w-sm mx-4 rounded-2xl p-5 flex flex-col gap-4"
+        style={{backgroundColor:"#1e1b4b",border:"1px solid rgba(167,139,250,.3)",maxHeight:"80vh",overflowY:"auto"}}>
+        <style>{CSS}</style>
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold text-white">🏆 {t.ui.leaderboard}</h2>
+          <button onClick={onClose} className="text-purple-300 hover:text-white text-lg px-2 py-1">✕</button>
+        </div>
+        {MODES_META.map(m=>{
+          const entries=Object.entries(profiles)
+            .map(([nick,p])=>{const s=(p.stats||{})[m.id]||{ok:0,total:0};return{nick,ok:s.ok,total:s.total,pct:s.total>0?Math.round(s.ok/s.total*100):0,best:p.bestStreak||0};})
+            .filter(e=>e.total>0)
+            .sort((a,b)=>b.pct-a.pct||b.best-a.best);
+          const tMode=(t.modes as any)[m.id];
+          return(
+            <div key={m.id}>
+              <div className="flex items-center gap-2 mb-2">
+                <span style={{fontSize:18}}>{m.icon}</span>
+                <span className="text-white font-bold text-sm">{tMode.name}</span>
+              </div>
+              {entries.length===0
+                ?<div className="text-purple-400 text-xs pl-1">{t.ui.noEntries}</div>
+                :<div className="flex flex-col gap-1">
+                  {entries.slice(0,5).map((e,i)=>(
+                    <div key={e.nick} className="flex items-center gap-2 px-3 py-2 rounded-xl"
+                      style={{backgroundColor:i===0?"rgba(251,191,36,.12)":"rgba(255,255,255,.06)"}}>
+                      <span className="font-bold text-sm w-5" style={{color:i===0?"#fbbf24":i===1?"#d1d5db":"#a78bfa"}}>{i+1}.</span>
+                      <span className="text-white text-sm flex-1 truncate">{e.nick}</span>
+                      <span className="text-green-400 text-xs font-bold">{e.pct}%</span>
+                      <span className="text-xs" style={{color:"#fbbf24"}}>🔥{e.best}</span>
+                      <span className="text-purple-400 text-xs">{e.ok}/{e.total}</span>
+                    </div>
+                  ))}
+                </div>
+              }
+            </div>
+          );
+        })}
+        <button onClick={onClose} className="mt-1 w-full py-2.5 rounded-xl text-white font-bold text-sm"
+          style={{backgroundColor:"rgba(255,255,255,.1)"}}>{t.ui.close}</button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Menu ──────────────────────────────────────────────────────────────────────
+function Menu({dispatch,stats,bestStreak,nickname}:any){
+  const t=useT();
+  const [showLB,setShowLB]=useState(false);
   const total=Object.values(stats).reduce((a:any,s:any)=>a+s.total,0) as number;
   const ok=Object.values(stats).reduce((a:any,s:any)=>a+s.ok,0) as number;
   const pct=total>0?Math.round(ok/total*100):0;
   return(
     <div className="flex-1 flex flex-col items-center justify-center px-4 gap-4 pb-8" style={{animation:"fadeIn .4s"}}>
       <style>{CSS}</style>
+      {showLB&&<LeaderboardModal onClose={()=>setShowLB(false)}/>}
+      {nickname&&<div className="text-purple-300 text-sm font-bold">👤 {nickname}</div>}
       <h2 className="text-2xl font-bold text-white mb-1">{t.ui.chooseMode}</h2>
       <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
         {MODES_META.map((m,idx)=>{
@@ -812,6 +948,18 @@ function Menu({dispatch,stats,bestStreak}:any){
           <div className="text-purple-400 text-xs mt-1">{t.ui.bestStreak}: {bestStreak}</div>
         </div>
       )}
+      <div className="flex gap-2 mt-1">
+        <button onClick={()=>setShowLB(true)}
+          className="px-4 py-2 rounded-xl text-sm font-bold text-purple-200 hover:scale-105 active:scale-95 transition-transform"
+          style={{backgroundColor:"rgba(167,139,250,.15)",border:"1px solid rgba(167,139,250,.3)"}}>
+          🏆 {t.ui.leaderboard}
+        </button>
+        <button onClick={()=>dispatch({type:"LOGOUT"})}
+          className="px-4 py-2 rounded-xl text-sm font-bold text-red-300 hover:scale-105 active:scale-95 transition-transform"
+          style={{backgroundColor:"rgba(248,113,113,.1)",border:"1px solid rgba(248,113,113,.2)"}}>
+          {t.ui.logout}
+        </button>
+      </div>
     </div>
   );
 }
@@ -829,25 +977,41 @@ export default function App(){
   // Load saved progress & pre-fill random buffer
   useEffect(()=>{
     randBuf.fill();
-    loadP().then(d=>{if(d)dispatch({type:"LOAD",data:d});else dispatch({type:"LOADED"});});
+    const activeUser=getActiveUser();
+    if(!activeUser){dispatch({type:"LOADED"});return;}
+    loadProfiles().then(profiles=>{
+      const p=profiles[activeUser];
+      if(p){const{password:_,...data}=p;dispatch({type:"SET_USER",nickname:activeUser,data});}
+      else{setActiveUser(null);dispatch({type:"LOADED"});}
+    });
   },[]);
 
-  // Save progress on change
+  // Save progress on change (profile-based)
   useEffect(()=>{
-    if(!st.loaded)return;
-    const{screen,loaded,lvlUp,...save}=st;
+    if(!st.loaded||!st.nickname)return;
+    const{screen,loaded,lvlUp,nickname,...save}=st;
     const k=JSON.stringify(save);
-    if(prevRef.current!==k){prevRef.current=k;saveP(save);}
+    if(prevRef.current!==k){
+      prevRef.current=k;
+      saveP(save);
+      loadProfiles().then(profiles=>{
+        profiles[nickname]={...profiles[nickname],password:profiles[nickname]?.password||"",...save};
+        saveProfiles(profiles);
+      });
+    }
   },[st]);
 
+  const isLogin=!st.loaded||st.screen==="login"||!st.nickname;
   let content;
-  if(st.screen==="menu")content=<Menu dispatch={dispatch} stats={st.stats} bestStreak={st.bestStreak}/>;
+  if(!st.loaded)content=null;
+  else if(isLogin)content=<LoginScreen dispatch={dispatch}/>;
+  else if(st.screen==="menu")content=<Menu dispatch={dispatch} stats={st.stats} bestStreak={st.bestStreak} nickname={st.nickname}/>;
   else content=<ModeScreen modeId={st.screen} audio={audio} dispatch={dispatch} streak={st.streak}/>;
 
   return(
     <LangCtx.Provider value={{lang,setLang}}>
       <div className="app-root flex flex-col" style={{background:"linear-gradient(135deg,#1e1b4b 0%,#0f0a2e 50%,#1a0a2e 100%)"}}>
-        <Header state={st} dispatch={dispatch}/>
+        {!isLogin&&<Header state={st} dispatch={dispatch}/>}
         {content}
         {st.lvlUp&&<LevelUp level={st.level} onDone={()=>dispatch({type:"CLR_LVL"})}/>}
       </div>
