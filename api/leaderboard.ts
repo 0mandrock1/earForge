@@ -1,9 +1,27 @@
-import { kv } from "@vercel/kv";
+import { Redis } from "@upstash/redis";
 
 const MODES = ["noteId", "intervals", "bpm", "key"];
 
 type Entry = { ok: number; total: number; pct: number; best: number };
 type StatsMap = Record<string, { ok: number; total: number }>;
+
+function createRedis(): Redis | null {
+  // Vercel Marketplace: Redis → Create (Upstash)
+  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+    return new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    });
+  }
+  // Vercel KV (fallback, same Upstash under the hood)
+  if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
+    return new Redis({
+      url: process.env.KV_REST_API_URL,
+      token: process.env.KV_REST_API_TOKEN,
+    });
+  }
+  return null;
+}
 
 export default async function handler(req: any, res: any) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -12,17 +30,15 @@ export default async function handler(req: any, res: any) {
 
   if (req.method === "OPTIONS") return res.status(200).end();
 
-  // Fail gracefully when KV is not connected (local dev without env vars)
-  if (!process.env.KV_REST_API_URL) {
-    return res.status(503).json({ error: "KV not configured" });
-  }
+  const redis = createRedis();
+  if (!redis) return res.status(503).json({ error: "Redis not configured" });
 
   try {
     if (req.method === "GET") {
       const result: Record<string, Array<{ nick: string } & Entry>> = {};
       await Promise.all(
         MODES.map(async (mode) => {
-          const raw = (await kv.hgetall<Record<string, string>>(`lb:${mode}`)) ?? {};
+          const raw = (await redis.hgetall<Record<string, string>>(`lb:${mode}`)) ?? {};
           result[mode] = Object.entries(raw)
             .map(([nick, v]) => ({ nick, ...(JSON.parse(v) as Entry) }))
             .filter((e) => e.total > 0)
@@ -41,7 +57,6 @@ export default async function handler(req: any, res: any) {
       };
       if (!nick || !stats) return res.status(400).json({ error: "Missing fields" });
 
-      // nick length guard
       const safeNick = String(nick).slice(0, 32);
 
       await Promise.all(
@@ -54,7 +69,7 @@ export default async function handler(req: any, res: any) {
             pct: Math.round((s.ok / s.total) * 100),
             best: bestStreak ?? 0,
           };
-          await kv.hset(`lb:${mode}`, { [safeNick]: JSON.stringify(entry) });
+          await redis.hset(`lb:${mode}`, { [safeNick]: JSON.stringify(entry) });
         })
       );
       return res.json({ ok: true });
