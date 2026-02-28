@@ -855,24 +855,51 @@ function LoginScreen({dispatch}:{dispatch:React.Dispatch<any>}){
 }
 
 // ─── Leaderboard Modal ─────────────────────────────────────────────────────────
+type LBEntry={nick:string,pct:number,ok:number,total:number,best:number};
+type LBData={[mode:string]:LBEntry[]};
+
+async function fetchLeaderboard():Promise<LBData>{
+  const r=await fetch("/api/leaderboard");
+  if(!r.ok)throw new Error("api_unavailable");
+  return r.json();
+}
+
+async function localLeaderboard():Promise<LBData>{
+  const profiles=await loadProfiles();
+  const result:LBData={};
+  for(const m of MODES_META){
+    result[m.id]=Object.entries(profiles)
+      .map(([nick,p])=>{const s=(p.stats||{})[m.id]||{ok:0,total:0};return{nick,ok:s.ok,total:s.total,pct:s.total>0?Math.round(s.ok/s.total*100):0,best:p.bestStreak||0};})
+      .filter(e=>e.total>0)
+      .sort((a,b)=>b.pct-a.pct||b.best-a.best);
+  }
+  return result;
+}
+
 function LeaderboardModal({onClose}:{onClose:()=>void}){
   const t=useT();
-  const [profiles,setProfiles]=useState<{[k:string]:ProfileData}>({});
-  useEffect(()=>{loadProfiles().then(setProfiles);},[]);
+  const [data,setData]=useState<LBData|null>(null);
+  const [isRemote,setIsRemote]=useState(false);
+  useEffect(()=>{
+    fetchLeaderboard()
+      .then(d=>{setData(d);setIsRemote(true);})
+      .catch(()=>localLeaderboard().then(d=>{setData(d);setIsRemote(false);}));
+  },[]);
   return(
     <div className="fixed inset-0 z-50 flex items-center justify-center" style={{backgroundColor:"rgba(0,0,0,.75)"}}>
       <div className="w-full max-w-sm mx-4 rounded-2xl p-5 flex flex-col gap-4"
         style={{backgroundColor:"#1e1b4b",border:"1px solid rgba(167,139,250,.3)",maxHeight:"80vh",overflowY:"auto"}}>
         <style>{CSS}</style>
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-white">🏆 {t.ui.leaderboard}</h2>
+          <div>
+            <h2 className="text-xl font-bold text-white">🏆 {t.ui.leaderboard}</h2>
+            {data&&<span className="text-xs" style={{color:isRemote?"#34d399":"rgba(255,255,255,.3)"}}>{isRemote?"🌐 global":"📱 local"}</span>}
+          </div>
           <button onClick={onClose} className="text-purple-300 hover:text-white text-lg px-2 py-1">✕</button>
         </div>
-        {MODES_META.map(m=>{
-          const entries=Object.entries(profiles)
-            .map(([nick,p])=>{const s=(p.stats||{})[m.id]||{ok:0,total:0};return{nick,ok:s.ok,total:s.total,pct:s.total>0?Math.round(s.ok/s.total*100):0,best:p.bestStreak||0};})
-            .filter(e=>e.total>0)
-            .sort((a,b)=>b.pct-a.pct||b.best-a.best);
+        {!data&&<div className="text-purple-400 text-sm text-center py-4">...</div>}
+        {data&&MODES_META.map(m=>{
+          const entries=(data[m.id]||[]).slice(0,5);
           const tMode=(t.modes as any)[m.id];
           return(
             <div key={m.id}>
@@ -883,7 +910,7 @@ function LeaderboardModal({onClose}:{onClose:()=>void}){
               {entries.length===0
                 ?<div className="text-purple-400 text-xs pl-1">{t.ui.noEntries}</div>
                 :<div className="flex flex-col gap-1">
-                  {entries.slice(0,5).map((e,i)=>(
+                  {entries.map((e,i)=>(
                     <div key={e.nick} className="flex items-center gap-2 px-3 py-2 rounded-xl"
                       style={{backgroundColor:i===0?"rgba(251,191,36,.12)":"rgba(255,255,255,.06)"}}>
                       <span className="font-bold text-sm w-5" style={{color:i===0?"#fbbf24":i===1?"#d1d5db":"#a78bfa"}}>{i+1}.</span>
@@ -998,6 +1025,10 @@ export default function App(){
         profiles[nickname]={...profiles[nickname],password:profiles[nickname]?.password||"",...save};
         saveProfiles(profiles);
       });
+      // Submit to global leaderboard (fire and forget — fails silently if offline)
+      fetch("/api/leaderboard",{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({nick:nickname,stats:save.stats,bestStreak:save.bestStreak}),
+      }).catch(()=>{});
     }
   },[st]);
 
