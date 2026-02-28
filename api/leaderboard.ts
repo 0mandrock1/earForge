@@ -76,7 +76,8 @@ export default async function handler(req: any, res: any) {
     }
 
     return res.status(405).json({ error: "Method not allowed" });
-  } catch {
-    return res.status(500).json({ error: "Internal server error" });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return res.status(500).json({ error: msg });
   }
 }
