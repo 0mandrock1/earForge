@@ -1,16 +1,27 @@
 // Self-hosted replacement for the Vercel /api/leaderboard function (was Upstash Redis).
-// Local JSON file store instead — no external service dependency.
+// Local JSON file store. Per-nick auth is optional both ways:
+//  - first submission for a nick with a password sets it (sha256 hash stored, never
+//    the plaintext) -> later submissions to that nick must match it.
+//  - first submission with NO password leaves the nick open forever -> anyone can
+//    post progress under it, no check, ever. This is the default/expected mode for
+//    a low-stakes personal leaderboard.
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 
 const DB_PATH = path.join(__dirname, "leaderboard.json");
 const PORT = process.env.PORT || 4173;
-const MODES = ["noteId", "intervals", "bpm", "key"];
+const MODES = ["noteId", "intervals", "bpm", "key", "chords"];
+
+function hash(pw) {
+  if (!pw) return "";
+  return crypto.createHash("sha256").update(String(pw)).digest("hex");
+}
 
 function loadDb() {
   try { return JSON.parse(fs.readFileSync(DB_PATH, "utf8")); }
-  catch { return Object.fromEntries(MODES.map(m => [m, {}])); }
+  catch { return { _auth: {}, ...Object.fromEntries(MODES.map(m => [m, {}])) }; }
 }
 function saveDb(db) {
   fs.writeFileSync(DB_PATH, JSON.stringify(db));
@@ -43,10 +54,25 @@ const server = http.createServer((req, res) => {
     req.on("data", c => body += c);
     req.on("end", () => {
       try {
-        const { nick, stats, bestStreak } = JSON.parse(body || "{}");
+        const { nick, stats, bestStreak, password } = JSON.parse(body || "{}");
         if (!nick || !stats) { res.writeHead(400); res.end(JSON.stringify({ error: "Missing fields" })); return; }
         const safeNick = String(nick).slice(0, 32);
         const db = loadDb();
+        db._auth = db._auth || {};
+
+        const existingHash = db._auth[safeNick];
+        const givenHash = hash(password);
+        if (existingHash === undefined) {
+          // First time this nick posts: claim it. Empty hash = stays open forever.
+          db._auth[safeNick] = givenHash;
+        } else if (existingHash && givenHash !== existingHash) {
+          // Nick is password-protected and the password doesn't match: reject.
+          res.writeHead(401, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "Wrong password for this nickname" }));
+          return;
+        }
+        // existingHash === "" (claimed as open) falls through here -> anyone can post.
+
         for (const mode of MODES) {
           const s = stats[mode] || { ok: 0, total: 0 };
           if (s.total === 0) continue;

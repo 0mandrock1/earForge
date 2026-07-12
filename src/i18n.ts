@@ -1,0 +1,146 @@
+import { createContext, useContext } from "react";
+
+// ─── i18n ──────────────────────────────────────────────────────────────────────
+export const T={
+  ua:{
+    modes:{
+      noteId:{name:"Note ID",desc:"Вгадай ноту"},
+      intervals:{name:"Intervals",desc:"Визнач інтервал"},
+      bpm:{name:"BPM Tap",desc:"Злови темп"},
+      key:{name:"Key Detect",desc:"Знайди тональність"},
+      chords:{name:"Chords",desc:"Визнач якість акорду"},
+    },
+    diffs:{
+      easy:{  label:"Легко",  noteId:"7 нот, 3 варіанти",   intervals:"5 інтервалів, 3 варіанти", bpm:"60–120, допуск ±12%",key:"Лише мажор, 3 варіанти",chords:"3 якості (мажор/мінор/зменш.)"},
+      medium:{label:"Середньо",noteId:"12 нот, 4 варіанти",  intervals:"12 інтервалів, 4 варіанти",bpm:"60–180, допуск ±8%", key:"Мажор + мінор, 4 варіанти",chords:"4 якості (+ збільш.)"},
+      hard:{  label:"Складно",noteId:"12 нот, 2 октави, 6 варіантів",intervals:"12 інтервалів, 6 варіантів",bpm:"40–200, допуск ±5%",key:"Мажор + мінор, 6 варіантів",chords:"6 якостей (+ мажор7/домін7)"},
+    },
+    ui:{
+      chooseMode:"Обери режим",chooseDiff:"Обери складність",
+      listen:"🔊 Слухати",listenA4:"🔊 Послухати A4 (440 Гц)",
+      next:"Далі →",back:"← Назад",startPlay:"🎮 Грати!",dontShow:"Більше не показувати",
+      total:"Загальний рахунок",bestStreak:"🔥 Кращий стрік",levelUpSub:"Продовжуй у тому ж дусі",
+      tapHint:"Підказка: потапай щоб виміряти",tapInsert:"Вставити",tapClear:"Очистити",
+      target:"Ціль",answer:"Відповідь",correct:"✅ Точно!",
+      higher:"⬆️ Більше! Темп швидший",lower:"⬇️ Менше! Темп повільніший",
+      playMajor:"♩ Мажор",playMinor:"♩ Мінор",playCadence:"🔊 I-IV-V-I",
+      tapToClose:"(натисни щоб закрити)",
+      enterNickname:"Нікнейм",enterPassword:"Пароль (необов'язково)",
+      passwordHint:"Порожньо = без пароля, цей нік лишиться відкритим назавжди",
+      loginBtn:"Увійти / Зареєструватись",wrongPassword:"Невірний пароль",
+      nicknameRequired:"Введи нікнейм",
+      leaderboard:"Таблиця лідерів",noEntries:"Поки немає записів",
+      accuracy:"Точність",close:"Закрити",logout:"Вийти",
+      dirAsc:"↑ Висхідний",dirDesc:"↓ Спадний",dirHarm:"♩ Гармонічний",volume:"Гучність",
+    },
+    questions:{noteId:"Яка це нота?",intervals:"Який інтервал?",bpm:"Який темп?",key:"Яка тональність?",chords:"Яка якість акорду?"},
+    streakMsgs:["","","Непогано!","Вогонь!","Майстер!","На хвилі!","Неймовірно!","Легенда!","GODLIKE!","UNSTOPPABLE!"],
+    tutorials:{
+      noteId:{title:"🎵 Як вгадувати ноти",steps:[
+        {icon:"🎯",text:"Знайди опорну ноту. Запам'ятай як звучить A4 (440 Гц). Натисни A4 і запам'ятай цей звук.",hasA4:true},
+        {icon:"🔊",text:"Слухай «характер» ноти. Низькі (C, D) — тепло і глибоко. Високі (A#, B) — яскраво і напружено."},
+        {icon:"🎹",text:"C# трохи вище C, але нижче D. Дієзи завжди «між» — шукай відчуття проміжку."},
+        {icon:"🧠",text:"Співай! Спробуй проспівати почуту ноту. Голос «сідає» легко — знайшов правильну висоту."},
+      ]},
+      intervals:{title:"🎼 Як чути інтервали",steps:[
+        {icon:"🎬",text:"Секунди. м2 (пів тону) — «Jaws» (тема акули, ре–ре#): дуже тісно, тривожно, хроматика. б2 (тон) — «Happy Birthday» перші дві ноти, крок по гамі: природно, спокійно."},
+        {icon:"🎶",text:"Терції — найемоційніші. м3 — «Smoke on the Water» (рифф), «Greensleeves»: сумно, меланхолійно. б3 — «Oh When the Saints», перший стрибок у «Happy Birthday»: радісно, тепло."},
+        {icon:"🎯",text:"Кварта і тритон. ч4 — «Here Comes the Bride», «Amazing Grace» (перший стрибок): чиста, стійка, «пуста». тт — «The Simpsons» тема, «Maria» (West Side Story): нестабільна, тривожна."},
+        {icon:"⭐",text:"Квінта і сексти. ч5 — «Star Wars», «Twinkle Twinkle» (1→5): порожня, героїчна. м6 — «The Entertainer» (Joplin): ніжна, трохи сумна. б6 — «My Way» (Sinatra): широка, піднесена."},
+        {icon:"🌊",text:"Септими й октава. м7 — «Somewhere» (West Side Story): романтична, напружена. б7 — «Take on Me» (A-ha): дуже широка, прагне вгору. окт — «Somewhere Over the Rainbow»: тріумфальний стрибок, максимальна дистанція."},
+        {icon:"💡",text:"Наспівуй! Голос — найкращий тренажер. Починай від знайомої ноти (A4). Нисхідні важчі: «My Bonnie» стартує з нисхідної б6. Якщо сумніваєшся між ч4 і тт — це всього пів тону різниці, вчуйся у стабільність."},
+      ]},
+      bpm:{title:"🥁 Як ловити темп",steps:[
+        {icon:"💓",text:"60 BPM = секунда (пульс у спокої). 120 — швидкий крок. 180 — біг."},
+        {icon:"🦶",text:"Тупай або кивай в ритм. Тіло запам'ятовує темп краще голови."},
+        {icon:"⏱️",text:"TAP — підказка. Потапай і подивись підрахований BPM."},
+        {icon:"📐",text:"Помилки: подвоєння і половинення. Результат ×2 або ÷2 — ти в іншій сітці."},
+      ]},
+      key:{title:"🎹 Як визначати тональність",steps:[
+        {icon:"😊",text:"Мажор — яскраво, «сонячно». Мінор — темніше, «дощово».",hasMajMin:true},
+        {icon:"👂",text:"Останній акорд — «дім». Яка нота = «дім»? Це тональність."},
+        {icon:"🎵",text:"Співай тоніку! Проспівай найбільш «стійку» ноту після прослуховування."},
+        {icon:"🔄",text:"I-IV-V-I: IV іде, V напружує, I вирішує. Фокус на вирішенні.",hasCadence:true},
+      ]},
+      chords:{title:"🎸 Як визначати акорди",steps:[
+        {icon:"😊",text:"Мажор — стабільний, яскравий. Мінор — стабільний, темніший. Це база всіх акордів.",hasMajMin:true},
+        {icon:"😬",text:"Зменшений — обидва інтервали «стиснуті», звучить тривожно й нестійко."},
+        {icon:"🌀",text:"Збільшений — «розтягнутий», симетричний, підвішений у повітрі — нема відчуття «дому»."},
+        {icon:"🎶",text:"7-ми (мажор7, домін7) додають четверту ноту зверху — більше «кольору» і напруги, ніж у простому тризвучку."},
+      ]},
+    },
+  },
+  en:{
+    modes:{
+      noteId:{name:"Note ID",desc:"Guess the note"},
+      intervals:{name:"Intervals",desc:"Identify the interval"},
+      bpm:{name:"BPM Tap",desc:"Catch the tempo"},
+      key:{name:"Key Detect",desc:"Find the key"},
+      chords:{name:"Chords",desc:"Identify chord quality"},
+    },
+    diffs:{
+      easy:{  label:"Easy",  noteId:"7 notes, 3 options",   intervals:"5 intervals, 3 options", bpm:"60–120, tolerance ±12%",key:"Major only, 3 options",chords:"3 qualities (maj/min/dim)"},
+      medium:{label:"Medium",noteId:"12 notes, 4 options",  intervals:"12 intervals, 4 options",bpm:"60–180, tolerance ±8%", key:"Major + minor, 4 options",chords:"4 qualities (+ aug)"},
+      hard:{  label:"Hard",  noteId:"12 notes, 2 octaves, 6 options",intervals:"12 intervals, 6 options",bpm:"40–200, tolerance ±5%",key:"Major + minor, 6 options",chords:"6 qualities (+ maj7/dom7)"},
+    },
+    ui:{
+      chooseMode:"Choose mode",chooseDiff:"Choose difficulty",
+      listen:"🔊 Listen",listenA4:"🔊 Listen to A4 (440 Hz)",
+      next:"Next →",back:"← Back",startPlay:"🎮 Play!",dontShow:"Don't show again",
+      total:"Total score",bestStreak:"🔥 Best streak",levelUpSub:"Keep it up!",
+      tapHint:"Hint: tap to measure tempo",tapInsert:"Use",tapClear:"Clear",
+      target:"Target",answer:"Answer",correct:"✅ Spot on!",
+      higher:"⬆️ Higher! Tempo is faster",lower:"⬇️ Lower! Tempo is slower",
+      playMajor:"♩ Major",playMinor:"♩ Minor",playCadence:"🔊 I-IV-V-I",
+      tapToClose:"(tap to close)",
+      enterNickname:"Nickname",enterPassword:"Password (optional)",
+      passwordHint:"Blank = no password, this nick stays open forever",
+      loginBtn:"Log In / Register",wrongPassword:"Wrong password",
+      nicknameRequired:"Enter a nickname",
+      leaderboard:"Leaderboard",noEntries:"No entries yet",
+      accuracy:"Accuracy",close:"Close",logout:"Log out",
+      dirAsc:"↑ Ascending",dirDesc:"↓ Descending",dirHarm:"♩ Harmonic",volume:"Volume",
+    },
+    questions:{noteId:"What note is this?",intervals:"What interval?",bpm:"What's the tempo?",key:"What key is this?",chords:"What chord quality?"},
+    streakMsgs:["","","Not bad!","On fire!","Master!","In the zone!","Incredible!","Legend!","GODLIKE!","UNSTOPPABLE!"],
+    tutorials:{
+      noteId:{title:"🎵 How to identify notes",steps:[
+        {icon:"🎯",text:"Find an anchor note. Memorize how A4 (440 Hz) sounds. Press A4 and remember that sound.",hasA4:true},
+        {icon:"🔊",text:"Listen to the note's 'character'. Low (C, D) — warm and deep. High (A#, B) — bright and tense."},
+        {icon:"🎹",text:"C# is just above C but below D. Sharps are always 'between' — feel the gap."},
+        {icon:"🧠",text:"Sing it! Try singing the note you heard. Voice lands easily — you found the right pitch."},
+      ]},
+      intervals:{title:"🎼 How to hear intervals",steps:[
+        {icon:"🎬",text:"Seconds. m2 (half step) — 'Jaws' shark theme (D–D#): creepy, tense, chromatic. M2 (whole step) — first two notes of 'Happy Birthday': natural, stepwise, calm."},
+        {icon:"🎶",text:"Thirds — the most emotional. m3 — 'Smoke on the Water' riff, 'Greensleeves': sad, dark, minor color. M3 — 'Oh When the Saints', first leap in 'Happy Birthday': joyful, warm, major color."},
+        {icon:"🎯",text:"Fourth & tritone. P4 — 'Here Comes the Bride', opening of 'Amazing Grace': pure, strong, resolved. TT — 'The Simpsons' theme, 'Maria' (West Side Story): unstable, tense, wants to move."},
+        {icon:"⭐",text:"Fifth & sixths. P5 — 'Star Wars', 'Twinkle Twinkle' (note 1→5): open, heroic, hollow. m6 — 'The Entertainer' (Joplin): gentle, wistful. M6 — 'My Way' (Sinatra): wide, soaring, triumphant."},
+        {icon:"🌊",text:"Sevenths & octave. m7 — 'Somewhere' (West Side Story): romantic, expansive. M7 — 'Take on Me' (A-ha): very wide, unstable, reaching upward. oct — 'Somewhere Over the Rainbow': maximum distance, triumphant leap."},
+        {icon:"💡",text:"Sing every interval — your voice is the best ear-training tool! Anchor from A4. Descending intervals are harder: 'My Bonnie Lies Over the Ocean' opens with a descending M6. When unsure between P4 and TT — it's just a half step; feel the stability."},
+      ]},
+      bpm:{title:"🥁 How to catch the tempo",steps:[
+        {icon:"💓",text:"60 BPM = 1 second (resting pulse). 120 — brisk walk. 180 — running."},
+        {icon:"🦶",text:"Tap your foot or nod along. Your body remembers tempo better than your mind."},
+        {icon:"⏱️",text:"TAP is a hint — tap along and see the calculated BPM."},
+        {icon:"📐",text:"Common errors: doubling/halving. Result ×2 or ÷2 means you're in a different grid."},
+      ]},
+      key:{title:"🎹 How to identify keys",steps:[
+        {icon:"😊",text:"Major — bright, 'sunny'. Minor — darker, 'rainy'.",hasMajMin:true},
+        {icon:"👂",text:"The last chord is 'home'. Which note feels like 'home'? That's the key."},
+        {icon:"🎵",text:"Sing the tonic! After listening, sing the most 'stable' note you feel."},
+        {icon:"🔄",text:"I-IV-V-I: IV departs, V creates tension, I resolves. Focus on the resolution.",hasCadence:true},
+      ]},
+      chords:{title:"🎸 How to identify chords",steps:[
+        {icon:"😊",text:"Major — stable, bright. Minor — stable, darker. That's the base of every chord.",hasMajMin:true},
+        {icon:"😬",text:"Diminished — both intervals are 'squeezed', sounds tense and unstable."},
+        {icon:"🌀",text:"Augmented — 'stretched', symmetrical, hangs in the air — no sense of 'home'."},
+        {icon:"🎶",text:"7ths (maj7, dom7) add a fourth note on top — more color and tension than a plain triad."},
+      ]},
+    },
+  },
+};
+
+export type Lang="ua"|"en";
+export const LangCtx=createContext({lang:"ua" as Lang,setLang:(_l:Lang)=>{}});
+export function useT(){const {lang}=useContext(LangCtx);return T[lang];}
+export function useLang(){return useContext(LangCtx);}

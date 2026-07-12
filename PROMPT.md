@@ -26,27 +26,52 @@ Hosting: static `dist/` served by nginx on Hetzner VPS at
   `base: '/earforge/'` and any fetch to the API must use
   `import.meta.env.BASE_URL` — don't hardcode `/api/...`.
 
-## Known gaps worth tackling (priority order)
-1. **Component split** — `App.tsx` is a monolith. Extract at minimum:
-   audio engine, i18n/T, OptGrid+Btn+NextBtn, per-mode game screens.
-2. **No spaced repetition** — misses aren't resurfaced. A simple
-   leaky-bucket ("wrong answers come back sooner") would meaningfully
-   improve retention for daily practice.
-3. **No chord/triad mode beyond Key Detect's cadence** — a dedicated
-   "identify the chord quality" mode (maj/min/dim/aug/7ths) is a natural
-   fifth game mode reusing the existing engine.
-4. **No PWA/offline support** — no manifest.json or service worker. Given
-   this is used for short daily sessions on a phone, installability +
-   offline caching of the JS bundle (audio is synthesized, no asset
-   fetching needed) is low-effort, high-value.
-5. **Leaderboard has no auth** — nickname + optional password exists in the
-   UI (`onLogin`) but the API doesn't check it; anyone can overwrite anyone
-   else's leaderboard entry by nick. Either enforce the password
-   server-side or drop the pretense of it being protected.
-6. **BPM/pitch detection ceiling** — hard difficulty tolerances (±5% BPM,
-   2-octave Note ID) were picked by feel, not tested against real listeners.
-   If revisiting difficulty curves, get a few practice sessions of data
-   first (the leaderboard's `pct`/`total` per mode is exactly this data).
+## Status: all 5 original gaps have been addressed
+1. **Component split** — done. `src/` is now: `constants.ts` (music theory +
+   CSS + helpers), `i18n.ts` (T + lang context), `audio.ts` (useAudio),
+   `storage.ts` (localStorage), `srs.ts` (spaced repetition), `reducer.ts`,
+   `components/common.tsx` (shared UI), `components/{Login,Menu,Leaderboard}.tsx`,
+   `modes/{NoteId,Intervals,Bpm,Key,Chords,ModeScreen}.tsx`. `App.tsx` is now
+   ~65 lines of pure orchestration.
+2. **Spaced repetition** — `src/srs.ts`. Leaky-bucket weight per (mode, answer
+   key): wrong +2 (capped at 5), correct -1, weight 0 = removed. `weightedPick`
+   biases the next-question pick toward high-weight items (~11x more likely
+   at max weight vs a clean item). Wired into noteId/intervals/key/chords via
+   `recordResult()` in each mode's onPick handler. **Not** wired into BPM —
+   the target is a continuous value, no stable discrete key to attach weight to.
+3. **Chords mode** — `modes/Chords.tsx`, 5th mode. Qualities maj/min/dim/aug/
+   maj7/dom7 (canonical order in `constants.ts` CHORDS, index-aligned across
+   ua/en so language toggle doesn't break identity). Tier slicing: easy=3,
+   medium=4, hard=6, same pattern as the other modes. Uses the new
+   `audio.playChord(notes)` (N notes struck together).
+4. **PWA/offline** — `public/manifest.json` + `public/sw.js` (stale-while-
+   revalidate, skips `/api/` and cross-origin requests) + registration in
+   `main.tsx`. Icons are generated placeholders (`public/icon-192.png`,
+   `icon-512.png`) — swap for real artwork whenever, they're just solid-purple
+   "EF" squares right now.
+5. **Leaderboard auth** — optional both ways, enforced server-side in
+   `server/leaderboard.js`. First POST for a nick claims it: empty password
+   = open forever (anyone can post as that nick, no check, ever — this is
+   the default/expected mode for casual use). Non-empty password = sha256
+   hash stored, later POSTs must match or get 401. Client sends the locally-
+   stored plaintext password over HTTPS on every submission; server never
+   stores plaintext. This is deliberately lightweight (no salt, no rate
+   limiting) — proportionate to a for-fun leaderboard, not a real auth system.
+
+## Remaining known gaps
+- **BPM/pitch detection ceiling** — hard difficulty tolerances (±5% BPM,
+  2-octave Note ID) were picked by feel, not tested against real listeners.
+  If revisiting difficulty curves, get a few practice sessions of data first
+  (the leaderboard's `pct`/`total` per mode is exactly this data).
+- **SRS weight isn't visible anywhere** — no UI shows which items are
+  currently "due"/weighted. A small debug view or a "review weak spots"
+  mode that only draws from the weighted pool would make the mechanism
+  legible instead of invisible.
+- **Chord mode icon 🎸 is a placeholder pick** — collides conceptually with
+  "guitar" when this is chords in general (works fine on a keyboard/DAW
+  context too). Not urgent, just noting the choice was arbitrary.
+- **Real PWA icons** — current ones are a generated purple square with "EF".
+  Fine functionally, but swap them for actual artwork when there's time.
 
 ## Constraints when making changes
 - Keep the audio engine dependency-free (no Tone.js, plain Web Audio) —
