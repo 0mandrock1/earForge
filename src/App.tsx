@@ -275,7 +275,9 @@ function useAudio(){
     _tone(ctx,freqFromNote(note),ctx.currentTime+0.15,dur);
   },[stopAll,ensureCtx,_tone]);
 
-  const playInterval=useCallback(async(n1:string,n2:string,del=0.5)=>{
+  // del<dur overlaps note2 attack with note1 release tail (independent gain envelopes
+  // from _tone) -> audible crossfade instead of a silent gap between the two notes.
+  const playInterval=useCallback(async(n1:string,n2:string,del=0.34)=>{
     stopAll();const ctx=await ensureCtx(),t=ctx.currentTime+0.15;
     _tone(ctx,freqFromNote(n1),t,0.4);_tone(ctx,freqFromNote(n2),t+del,0.4);
   },[stopAll,ensureCtx,_tone]);
@@ -530,14 +532,25 @@ function NextBtn({onClick,color}:{onClick:()=>void,color:string}){
   return <button onClick={onClick} className="mt-1 px-8 py-3 rounded-2xl text-white font-bold hover:scale-105 active:scale-95 transition-transform" style={{background:color,animation:"popIn .3s ease-out"}}>{t.ui.next}</button>;
 }
 function OptGrid({opts,picked,ans,locked,onPick,cols=2}:any){
+  // Digit keys 1-9 pick the corresponding option -> faster reps than mouse/tap.
+  useEffect(()=>{
+    const h=(e:KeyboardEvent)=>{
+      if(locked)return;
+      const i=parseInt(e.key,10)-1;
+      if(i>=0&&i<opts.length){e.preventDefault();onPick(opts[i]);}
+    };
+    window.addEventListener("keydown",h);
+    return()=>window.removeEventListener("keydown",h);
+  },[opts,locked,onPick]);
   return(
     <div className="grid gap-3 w-full max-w-xs" style={{gridTemplateColumns:`repeat(${cols},1fr)`,animation:"slideUp .3s ease-out"}}>
-      {opts.map((o:string)=>{
+      {opts.map((o:string,i:number)=>{
         let bg="rgba(255,255,255,.1)",anim="",brd="2px solid transparent";
         if(locked&&o===ans){bg="#16a34a";anim="popIn .3s ease-out";brd="2px solid #4ade80";}
         else if(locked&&o===picked&&o!==ans){bg="#dc2626";anim="shake .4s ease";brd="2px solid #f87171";}
-        return <button key={o} onClick={()=>onPick(o)} className="py-3 rounded-xl text-white font-bold text-base hover:bg-white hover:bg-opacity-20"
-          style={{backgroundColor:bg,animation:anim,border:brd,transition:"background-color .2s"}}>{o}</button>;
+        return <button key={o} onClick={()=>onPick(o)} className="relative py-3 rounded-xl text-white font-bold text-base hover:bg-white hover:bg-opacity-20"
+          style={{backgroundColor:bg,animation:anim,border:brd,transition:"background-color .2s"}}>
+          <span className="absolute top-1 left-2 text-[10px] opacity-40">{i+1}</span>{o}</button>;
       })}
     </div>
   );
@@ -934,7 +947,7 @@ type LBEntry={nick:string,pct:number,ok:number,total:number,best:number};
 type LBData={[mode:string]:LBEntry[]};
 
 async function fetchLeaderboard():Promise<LBData>{
-  const r=await fetch("/api/leaderboard");
+  const r=await fetch(import.meta.env.BASE_URL+"api/leaderboard");
   if(!r.ok)throw new Error("api_unavailable");
   return r.json();
 }
@@ -1101,7 +1114,7 @@ export default function App(){
         saveProfiles(profiles);
       });
       // Submit to global leaderboard (fire and forget — fails silently if offline)
-      fetch("/api/leaderboard",{method:"POST",headers:{"Content-Type":"application/json"},
+      fetch(import.meta.env.BASE_URL+"api/leaderboard",{method:"POST",headers:{"Content-Type":"application/json"},
         body:JSON.stringify({nick:nickname,stats:save.stats,bestStreak:save.bestStreak}),
       }).catch(()=>{});
     }
