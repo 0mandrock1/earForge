@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EarForge — довідка</title>
+<style>
+:root{
+  --bg:#0f0a2e; --bg2:#1a0a2e; --surface:rgba(255,255,255,.05); --surface2:rgba(255,255,255,.08);
+  --border:rgba(167,139,250,.25); --text:#f1f0fb; --text-dim:#b8b3d9; --text-faint:#8b85b8;
+  --accent:#a78bfa; --accent2:#7c3aed; --warn:#fbbf24;
+  --noteId:#8b5cf6; --intervals:#06b6d4; --bpm:#f59e0b; --key:#10b981; --chords:#f43f5e;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:linear-gradient(160deg,var(--bg2) 0%,var(--bg) 55%,#150a35 100%);color:var(--text);line-height:1.65}
+a{color:var(--accent)}
+h1,h2,h3{font-weight:800;letter-spacing:-.01em}
+h2{font-size:22px;margin:0 0 14px;padding-top:8px;border-top:1px solid var(--border)}
+h3{font-size:16px;color:var(--accent);margin:22px 0 8px}
+p{color:var(--text-dim);margin:8px 0}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:999px;
+  background:var(--surface2);border:1px solid var(--border);font-size:12px;font-weight:700;color:var(--text-dim)}
+#sidebar{position:fixed;top:0;left:0;width:250px;height:100vh;overflow-y:auto;background:rgba(10,6,30,.9);
+  border-right:1px solid var(--border);padding:20px 16px;transition:width .25s ease,padding .25s ease;z-index:20}
+#sidebar.collapsed{width:0;padding:20px 0;overflow:hidden}
+#sidebar h4{color:var(--text-faint);font-size:11px;text-transform:uppercase;letter-spacing:.08em;margin:18px 0 8px}
+#sidebar a{display:block;color:var(--text-dim);text-decoration:none;font-size:13.5px;padding:6px 10px;border-radius:8px;margin-bottom:2px}
+#sidebar a:hover,#sidebar a.active{background:var(--surface2);color:var(--text)}
+#toggleBtn{position:fixed;top:16px;left:262px;z-index:30;width:36px;height:36px;border-radius:10px;border:1px solid var(--border);
+  background:var(--surface2);color:var(--text);cursor:pointer;font-size:16px;transition:left .25s ease}
+body.sidebar-collapsed #toggleBtn{left:16px}
+#main{margin-left:250px;padding:70px 32px 80px;max-width:760px;transition:margin-left .25s ease}
+body.sidebar-collapsed #main{margin-left:0}
+.hero{margin-bottom:8px}
+.hero .badges{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 6px}
+.glossary{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0 20px}
+.gterm{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 14px}
+.gterm b{color:var(--text);font-size:13.5px}
+.gterm span{display:block;color:var(--text-faint);font-size:12.5px;margin-top:2px}
+.modecard{border-radius:14px;padding:16px 18px;margin:12px 0;background:var(--surface);border-left:4px solid var(--c,var(--accent))}
+.modecard h3{margin:0 0 4px;color:var(--c,var(--accent))}
+.modecard .tag{font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.05em}
+details{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin:10px 0;padding:2px 16px}
+summary{cursor:pointer;padding:12px 0;font-weight:700;color:var(--text);list-style:none}
+summary::-webkit-details-marker{display:none}
+summary:before{content:"▸ ";color:var(--accent)}
+details[open] summary:before{content:"▾ "}
+details p{padding-bottom:14px}
+.tip{background:rgba(167,139,250,.08);border:1px solid var(--border);border-radius:12px;padding:12px 16px;margin:10px 0}
+.tip b{color:var(--accent)}
+code{background:rgba(255,255,255,.08);padding:1px 6px;border-radius:5px;font-size:.9em}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13.5px}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--border)}
+th{color:var(--text-faint);font-weight:700;font-size:11.5px;text-transform:uppercase}
+.tblwrap{overflow-x:auto}
+footer{color:var(--text-faint);font-size:12.5px;margin-top:40px;padding-top:16px;border-top:1px solid var(--border)}
+@media(max-width:768px){
+  #sidebar{width:0;padding:20px 0;overflow:hidden}
+  #sidebar.open{width:78vw;max-width:280px;padding:20px 16px;box-shadow:0 0 40px rgba(0,0,0,.5)}
+  #toggleBtn{left:16px}
+  body.sidebar-collapsed #toggleBtn{left:16px}
+  #main{margin-left:0;padding:70px 20px 60px}
+  .glossary{grid-template-columns:1fr}
+  summary,a,button{min-height:44px;display:flex;align-items:center}
+  h2{font-size:19px}
+}
+</style>
+</head>
+<body class="sidebar-collapsed">
+
+<button id="toggleBtn" onclick="toggleSidebar()"><span class="icon-close">←</span><span class="icon-open" style="display:none">☰</span></button>
+
+<nav id="sidebar" class="collapsed">
+  <div class="pill">🎧 EarForge</div>
+  <h4>Зміст</h4>
+  <a href="#glossary">Терміни</a>
+  <a href="#modes">5 режимів</a>
+  <a href="#progress">XP, рівні, стрік</a>
+  <a href="#srs">Як обирається наступне питання</a>
+  <a href="#session">Сесія</a>
+  <a href="#weak">Слабкі місця</a>
+  <a href="#leaderboard">Лідерборд і нікнейми</a>
+  <a href="#usecases">Типові сценарії</a>
+  <a href="#tips">Як реально прокачати слух</a>
+</nav>
+
+<main id="main">
+
+<div class="hero">
+  <h1>🎧 EarForge — як це працює</h1>
+  <div class="badges">
+    <span class="pill">📖 ~8 хв читання</span>
+    <span class="pill">🎯 для тих, хто вже грає в EarForge</span>
+  </div>
+  <p>Довідка про механіки застосунку: що кожна з них тренує і як з неї вичавити максимум за
+  ту саму кількість хвилин практики. Це не туторіал з нуля (той є в самому застосунку при
+  першому вході в кожен режим) — тут про те, чому механіки влаштовані саме так.</p>
+</div>
+
+<h2 id="glossary">Терміни</h2>
+<div class="glossary">
+  <div class="gterm"><b>XP</b><span>Очки досвіду. 10 × множник стріку за правильну відповідь.</span></div>
+  <div class="gterm"><b>Стрік (streak)</b><span>Серія відповідей поспіль без помилки. Обнуляється на першій помилці.</span></div>
+  <div class="gterm"><b>Множник стріку</b><span>×2 з 2-го стріку, ×3 з 5-го, ×5 з 9-го — XP за раунд росте разом зі стріком.</span></div>
+  <div class="gterm"><b>Вага (SRS weight)</b><span>Внутрішній лічильник «наскільки часто зараз плутається» певний пункт — нота, інтервал, тональність чи акорд.</span></div>
+  <div class="gterm"><b>Сесія</b><span>Структурований блок з фіксованою кількістю раундів, що мішує обрані режими, з підсумком у кінці.</span></div>
+  <div class="gterm"><b>Слабкі місця</b><span>Режим, який тягне питання лише з того, що зараз має ненульову вагу.</span></div>
+  <div class="gterm"><b>Відкритий нік</b><span>Нікнейм на лідерборді без пароля — постити прогрес під ним може будь-хто, назавжди.</span></div>
+</div>
+
+<h2 id="modes">5 режимів</h2>
+<p>Кожен режим тренує окремий навик слуху. Складність (легко/середньо/складно) керує кількістю
+варіантів відповіді та жорсткістю допуску — не самим матеріалом.</p>
+
+<div class="modecard" style="--c:var(--noteId)">
+  <span class="tag">Note ID · 🎵</span>
+  <h3>Абсолютний слух на окрему ноту</h3>
+  <p>Тренує розпізнавання висоти без опори на інтервал — «яка це нота сама по собі». Найважче
+  з п'яти, бо немає точки відліку крім A4 (кнопка 🔊 A4 завжди доступна зверху). Прокачується
+  повільніше за інші режими — це нормально, абсолютний слух не з'являється за тиждень.</p>
+</div>
+<div class="modecard" style="--c:var(--intervals)">
+  <span class="tag">Intervals · 🎼</span>
+  <h3>Відносний слух — відстань між нотами</h3>
+  <p>Найкорисніший режим для практичної музики: підбір на слух, транскрипція, імпровізація —
+  все це відносний слух, не абсолютний. Кожен інтервал прив'язаний до пісні-якоря (наприклад
+  ч5 = «Star Wars»); при помилці тепер з'являється підказка з цим якорем просто під кнопками.</p>
+</div>
+<div class="modecard" style="--c:var(--bpm)">
+  <span class="tag">BPM Tap · 🥁</span>
+  <h3>Відчуття темпу</h3>
+  <p>Єдиний режим без «правильної ноти» — ціль безперервна (конкретне число BPM), тому сюди
+  не підв'язана вага помилок (немає стабільного «ключа», за який чіплятись). Кнопка TAP дає
+  можливість «прощупати» ритм тілом замість вгадування числа; кнопка «🔊 Порівняти» після відповіді
+  програє загаданий темп і власну відповідь одну за одною — на слух різниця відчутніша, ніж
+  цифри «швидше/повільніше».</p>
+</div>
+<div class="modecard" style="--c:var(--key)">
+  <span class="tag">Key Detect · 🎹</span>
+  <h3>Тональність за каденцією</h3>
+  <p>Програється прогресія I–IV–V–I — потрібно визначити, яка нота і лад (мажор/мінор) є
+  «домом». Тренує відчуття тонального центру — навик, потрібний для підбору акомпанементу
+  та розуміння того, куди «тягне» гармонія.</p>
+</div>
+<div class="modecard" style="--c:var(--chords)">
+  <span class="tag">Chords · 🎸</span>
+  <h3>Якість акорду</h3>
+  <p>Один акорд, зіграний одночасно (не арпеджіо) — потрібно визначити якість: мажор, мінор,
+  зменшений, збільшений, або (на складному рівні) мажор7/домінантсептакорд. Це найновіший
+  режим, доданий після Note ID/Intervals/BPM/Key — якщо чогось не вистачає в поясненнях,
+  дай знати.</p>
+</div>
+
+<h2 id="progress">XP, рівні, стрік</h2>
+<p>Це найпростіший шар — суто ігрова мотивація, не навчальний механізм. Рівень росте кожні
+200 XP. Головне тут — не гнатись за числом, а за стріком: множник ×5 з 9-ї відповіді поспіль
+— непрямий спосіб заохотити зосередженість замість швидкого клікання навмання.</p>
+
+<h2 id="srs">Як обирається наступне питання</h2>
+<p>Всередині кожного режиму (крім BPM) працює зважений вибір — по суті легка версія spaced
+repetition, відома як «leaky bucket»: за кожну неправильну відповідь конкретний пункт
+(нота/інтервал/тональність/акорд) отримує +2 до внутрішньої ваги (максимум 5), за правильну
+−1. Поки вага більша нуля, цей пункт випадає в питаннях значно частіше — приблизно в 11 разів
+частіше на максимальній вазі, ніж «чистий» пункт з вагою 0.</p>
+<p>Це відбувається непомітно — питання все ще виглядають випадковими, просто зміщеними в
+бік того, що недавно плутали. Побачити цю вагу напряму поки не можна — єдиний непрямий
+індикатор: якщо певний пункт трапляється частіше за інших, значить його недавно провалили.</p>
+
+<h2 id="session">Сесія</h2>
+<p>Замість нескінченного одного режиму — сесія: обирається набір режимів (усі 5 або декілька),
+складність і кількість раундів (10/15/20/30), питання йдуть упереміш між обраними режимами,
+в кінці — підсумок: точність по кожному режиму за цю сесію, здобуті XP, і порівняння з
+попередньою сесією (▲/▼ у відсотках).</p>
+<p>Це головний спосіб перетворити «двадцять хвилин двічі на день» у щось із чітким початком і
+кінцем — сесія сама каже, коли досить, замість нескінченного скролу питань.</p>
+
+<h2 id="weak">Слабкі місця</h2>
+<p>Окрема кнопка в меню — на відміну від звичайної сесії, тут узагалі немає екрана
+налаштувань: застосунок сам дивиться, що зараз має ненульову вагу (з розділу вище) в
+Note ID / Intervals / Key / Chords, і збирає з цього коротку сесію (BPM сюди принципово не
+входить — нема стабільного «ключа» для ваги). Якщо зараз нічого не провалено — з'явиться
+«Немає слабких місць — усе чисто! 🎉» замість порожньої сесії.</p>
+<div class="tip"><b>Коли використовувати:</b> одразу після звичайної сесії, поки помилки ще
+«теплі» — leaky bucket спадає з часом (правильна відповідь −1 за раз), тож повторення
+day після дня саме тих пунктів, які плутались учора, найефективніше в перші день-два.</div>
+
+<h2 id="leaderboard">Лідерборд і нікнейми</h2>
+<p>Нікнейм при вході — з паролем або без. Порожній пароль лишає нік відкритим назавжди:
+постити прогрес під ним може будь-хто, без перевірок, ніколи. Це навмисне спрощення для
+низькоризикового лідерборду для розваги, не серйозна авторизація. Якщо пароль вказано —
+перший запис під ніком його «клеймить»: сервер зберігає sha256-хеш (не сам пароль), і всі
+подальші запити повинні збігатись, інакше 401.</p>
+
+<h2 id="usecases">Типові сценарії</h2>
+<details>
+  <summary>Щоденна практика (2× по 20 хв)</summary>
+  <p>Сесія на 15-20 раундів, складність — та, де точність тримається в районі 70-85% (нижче
+  — забагато фрустрації, вище — забагато легкості, слух не росте). Одразу після — «Слабкі
+  місця», якщо там щось є.</p>
+</details>
+<details>
+  <summary>Готуюсь підбирати щось конкретне (мікс, партія, кавер)</summary>
+  <p>Сесія тільки на Intervals + Key, hard, 20-30 раундів — саме ці два режими напряму
+  переносяться на підбір гармонії й мелодії на слух.</p>
+</details>
+<details>
+  <summary>Швидка розминка перед студійною сесією чи виступом</summary>
+  <p>10 раундів, будь-які режими, medium — розігріти увагу за 3-5 хвилин, не марафон.</p>
+</details>
+<details>
+  <summary>Довго не грав, хочеться побачити де просів слух</summary>
+  <p>Одна довга сесія (30 раундів, усі режими) на hard — підсумок покаже точність по кожному
+  режиму окремо, видно одразу, що просіло найбільше.</p>
+</details>
+
+<h2 id="tips">Як реально прокачати слух</h2>
+<p>Механіки вище — інструмент, не сама мета. Кілька практичних принципів, які роблять цей
+інструмент дієвим, а не просто відкриттям додатку заради стріку:</p>
+<div class="tip"><b>Співай почуте.</b> Це є в кожному тьюторіалі не просто так — голос
+перевіряє, чи справді розпізнано висоту, чи просто вгадано варіант з чотирьох запропонованих.</div>
+<div class="tip"><b>Не грати на максимальній складності одразу.</b> Точність нижче ~60% означає
+занадто багато вгадування — слух не встигає закріпити патерн. Опускати складність, коли
+частіше помилка, ніж правильна відповідь.</div>
+<div class="tip"><b>Коротко і часто краще за рідко і довго.</b> Дві сесії по 20 хв дають більше,
+ніж одна на годину раз на тиждень — це власне те, чому тут з'явився режим сесій.</div>
+<div class="tip"><b>Слабкі місця — одразу, не відкладаючи.</b> Вага з часом спадає сама (кожна
+правильна відповідь −1) — тобто вікно, коли повторення найдешевше й найефективніше, коротке.</div>
+
+<div class="tblwrap">
+<table>
+<tr><th>Режим</th><th>Що дає в реальному музикуванні</th></tr>
+<tr><td>Note ID</td><td>Абсолютний слух — рідше потрібен напряму, але тренує загальну впевненість у висоті</td></tr>
+<tr><td>Intervals</td><td>Підбір мелодій і гармонії на слух, транскрипція</td></tr>
+<tr><td>BPM Tap</td><td>Відчуття темпу без метронома — корисно при живому виконанні / джемі</td></tr>
+<tr><td>Key Detect</td><td>Розуміння тонального центру — підбір акомпанементу</td></tr>
+<tr><td>Chords</td><td>Розпізнавання гармонії наживо — що саме грає бас/клавіші в міксі</td></tr>
+</table>
+</div>
+
+<footer>
+EarForge · <a href="../" >← до застосунку</a> · вихідний код: <a href="https://github.com/0mandrock1/earForge" target="_blank">github.com/0mandrock1/earForge</a>
+</footer>
+
+</main>
+
+<script>
+function isMobile(){return window.innerWidth<=768}
+function toggleSidebar(){
+  const sb=document.getElementById('sidebar');
+  const close=document.querySelector('.icon-close'), open=document.querySelector('.icon-open');
+  if(isMobile()){
+    sb.classList.toggle('open');
+  } else {
+    document.body.classList.toggle('sidebar-collapsed');
+    sb.classList.toggle('collapsed');
+  }
+  const collapsed=document.body.classList.contains('sidebar-collapsed')||(isMobile()&&!sb.classList.contains('open'));
+  close.style.display=collapsed?'none':'inline';
+  open.style.display=collapsed?'inline':'none';
+}
+// Highlight current section on scroll
+const links=document.querySelectorAll('#sidebar a[href^="#"]');
+const sections=[...links].map(l=>document.querySelector(l.getAttribute('href'))).filter(Boolean);
+const io=new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      links.forEach(l=>l.classList.remove('active'));
+      const id=e.target.id;
+      const active=[...links].find(l=>l.getAttribute('href')==='#'+id);
+      if(active)active.classList.add('active');
+    }
+  });
+},{rootMargin:'-20% 0px -70% 0px'});
+sections.forEach(s=>io.observe(s));
+</script>
+</body>
+</html>

@@ -11,7 +11,10 @@ const path = require("path");
 const crypto = require("crypto");
 
 const DB_PATH = path.join(__dirname, "leaderboard.json");
-const PORT = process.env.PORT || 4173;
+// Hardcoded, not process.env.PORT -- the shell/pm2 environment on this VPS carries an
+// ambient PORT var used by unrelated tooling, which was silently overriding this on
+// every pm2 restart --update-env and crash-looping the service on EADDRINUSE.
+const PORT = 4173;
 const MODES = ["noteId", "intervals", "bpm", "key", "chords"];
 
 function hash(pw) {

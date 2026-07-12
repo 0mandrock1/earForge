@@ -5,8 +5,9 @@ import { Btn, NextBtn, GWrap, useGameFB, useGameKeys } from "../components/commo
 
 // No spaced repetition here on purpose — the target BPM is a continuous value, not a
 // discrete label, so there's no stable "key" for the leaky-bucket weighting to attach to.
-export default function BpmMode({audio,dispatch,streak,diff}:any){
-  const t=useT();const fb=useGameFB(streak,dispatch);
+// Also excluded from Session/Weak-spots mode selection for the same reason.
+export default function BpmMode({audio,dispatch,streak,diff,onAdvance}:any){
+  const t=useT();const fb=useGameFB(streak,dispatch,"bpm");
   const [lo,hi,tol]=diff==="easy"?[60,120,.12]:diff==="medium"?[60,180,.08]:[40,200,.05];
   const bRef=useRef(randInt(lo,hi));
   const meta=MODES_META[2];
@@ -19,12 +20,20 @@ export default function BpmMode({audio,dispatch,streak,diff}:any){
 
   const play=()=>audio.playMetronome(bRef.current,8);
   const clearTaps=()=>{setTaps([]);setTapBpm(null);};
-  const startNew=()=>{bRef.current=randInt(lo,hi);setInput("");setRes(null);clearTaps();fb.reset();audio.playMetronome(bRef.current,8);};
+  const startNew=()=>{
+    if(onAdvance){onAdvance();return;}
+    bRef.current=randInt(lo,hi);setInput("");setRes(null);clearTaps();fb.reset();audio.playMetronome(bRef.current,8);
+  };
   const submit=()=>{
     const v=parseInt(input);if(!v||v<20||v>300)return;
     const ok=Math.abs(v-bRef.current)<=bRef.current*tol;
     setRes({ok,dir:v<bRef.current?"higher":v>bRef.current?"lower":"exact",userBpm:v});
     ok?fb.onOk():fb.onBad();
+  };
+  const compare=()=>{
+    if(!res)return;
+    audio.playMetronome(bRef.current,4);
+    setTimeout(()=>audio.playMetronome(res.userBpm,4),(60000/bRef.current)*4+400);
   };
   const tap=()=>{
     if(res)return;
@@ -96,6 +105,8 @@ export default function BpmMode({audio,dispatch,streak,diff}:any){
               </div>
             </div>
           }
+          <button onClick={compare} className="px-4 py-1.5 rounded-xl text-white text-sm font-bold"
+            style={{backgroundColor:"rgba(255,255,255,.12)",border:"1px solid rgba(255,255,255,.2)"}}>{t.ui.compare}</button>
           <NextBtn onClick={startNew} color={meta.btn}/>
         </div>
       )}

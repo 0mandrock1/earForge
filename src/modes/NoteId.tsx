@@ -1,18 +1,23 @@
 import { useRef, useState, useEffect } from "react";
 import { NOTES, NAT_NOTES, MODES_META, pickOpts, randBuf } from "../constants";
 import { useT } from "../i18n";
-import { weightedPick, recordResult } from "../srs";
+import { weightedPick, recordResult, getWeakKeys } from "../srs";
 import { A4Btn, Btn, NextBtn, OptGrid, GWrap, useGameFB, useGameKeys } from "../components/common";
 
-export default function NoteIdMode({audio,dispatch,streak,diff}:any){
-  const t=useT();const fb=useGameFB(streak,dispatch);
+// onAdvance: when set (Session mode), "Next" hands control back to the session runner
+// instead of generating another noteId round in place.
+// weakOnly: when set, only draws from notes currently carrying SRS miss-weight.
+export default function NoteIdMode({audio,dispatch,streak,diff,onAdvance,weakOnly}:any){
+  const t=useT();const fb=useGameFB(streak,dispatch,"noteId");
   const pool=diff==="easy"?NAT_NOTES:NOTES;
   const nOpts=diff==="easy"?3:diff==="medium"?4:6;
   const octs=diff==="hard"?[3,4,5]:[4];
   const lastAnsRef=useRef<string|null>(null);
   const newR=()=>{
-    const fp=lastAnsRef.current?pool.filter(x=>x!==lastAnsRef.current):pool;
-    const a=weightedPick("noteId",fp.length>0?fp:pool,x=>x,()=>randBuf.get());
+    const base=weakOnly?pool.filter(x=>getWeakKeys("noteId").includes(x)):pool;
+    const src=base.length>0?base:pool;
+    const fp=lastAnsRef.current?src.filter(x=>x!==lastAnsRef.current):src;
+    const a=weightedPick("noteId",fp.length>0?fp:src,x=>x,()=>randBuf.get());
     const o=octs[Math.floor(randBuf.get()*octs.length)];
     lastAnsRef.current=a;
     return{ans:a,opts:pickOpts(a,pool,nOpts),note:a+o,picked:null};
@@ -22,7 +27,11 @@ export default function NoteIdMode({audio,dispatch,streak,diff}:any){
   const lkRef=useRef(lk);lkRef.current=lk;
   const meta=MODES_META[0];
   useEffect(()=>{audio.playNote(rRef.current.note);},[]);// eslint-disable-line
-  const goNext=()=>{if(!lkRef.current)return;const n=newR();setR(n);setLk(false);fb.reset();setTimeout(()=>audio.playNote(n.note),100);};// eslint-disable-line
+  const goNext=()=>{
+    if(!lkRef.current)return;
+    if(onAdvance){onAdvance();return;}
+    const n=newR();setR(n);setLk(false);fb.reset();setTimeout(()=>audio.playNote(n.note),100);
+  };// eslint-disable-line
   useGameKeys(()=>audio.playNote(rRef.current.note),goNext);
   return(
     <GWrap {...fb} streak={streak}>

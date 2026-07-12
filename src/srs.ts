@@ -35,3 +35,10 @@ export function weightedPick<T>(modeId: string, items: T[], keyFn: (t: T) => str
   for (let i = 0; i < items.length; i++) { r -= weights[i]; if (r <= 0) return items[i]; }
   return items[items.length - 1];
 }
+
+// Keys currently carrying miss-weight for a mode — the raw material for a "weak spots"
+// drill that only pulls from what's actually been getting missed, instead of the whole pool.
+export function getWeakKeys(modeId: string): string[] {
+  const d = load()[modeId] || {};
+  return Object.keys(d).filter(k => d[k] > 0);
+}

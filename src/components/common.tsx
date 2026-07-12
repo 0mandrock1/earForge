@@ -132,7 +132,11 @@ export function FloatXp({xp,id}:{xp:number,id:number}){
     style={{animation:"floatUp .9s ease-out forwards",top:"25%",left:"50%",marginLeft:-20,fontSize:20}}>+{xp} XP</div>;
 }
 
-export function useGameFB(streak:number,dispatch:React.Dispatch<any>){
+// modeId is passed explicitly (not inferred from the current screen) because in a
+// mixed Session the top-level screen is "session" while several different modes
+// cycle through underneath it — inferring from screen would bucket every session
+// round\'s stats under a bogus "session" key instead of the real mode.
+export function useGameFB(streak:number,dispatch:React.Dispatch<any>,modeId:string){
   const [flash,setFlash]=useState<string|null>(null);
   const [floats,setFloats]=useState<{xp:number,id:number}[]>([]);
   const [sPop,setSPop]=useState(false);
@@ -143,9 +147,9 @@ export function useGameFB(streak:number,dispatch:React.Dispatch<any>){
       const g=10*getMult(streak);fid.current++;
       setFloats(f=>[...f.slice(-3),{xp:g,id:fid.current}]);
       if(streak>=2){setSPop(true);setTimeout(()=>setSPop(false),400);}
-      setFlash("correct");setPtrig(p=>p+1);dispatch({type:"CORRECT"});
-    },[streak,dispatch]),
-    onBad:useCallback(()=>{setFlash("wrong");dispatch({type:"WRONG"});},[dispatch]),
+      setFlash("correct");setPtrig(p=>p+1);dispatch({type:"CORRECT",mode:modeId});
+    },[streak,dispatch,modeId]),
+    onBad:useCallback(()=>{setFlash("wrong");dispatch({type:"WRONG",mode:modeId});},[dispatch,modeId]),
     reset:useCallback(()=>setFlash(null),[]),
   };
 }

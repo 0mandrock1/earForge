@@ -7,6 +7,7 @@ import { Header, LevelUp } from "./components/common";
 import LoginScreen from "./components/Login";
 import Menu from "./components/Menu";
 import ModeScreen from "./modes/ModeScreen";
+import SessionFlow from "./modes/Session";
 import { randBuf } from "./constants";
 
 export default function App(){
@@ -33,7 +34,7 @@ export default function App(){
   // Save progress on change (profile-based)
   useEffect(()=>{
     if(!st.loaded||!st.nickname)return;
-    const{screen,loaded,lvlUp,nickname,...save}=st;
+    const{screen,loaded,lvlUp,nickname,sessionWeak,...save}=st;
     const k=JSON.stringify(save);
     if(prevRef.current!==k){
       prevRef.current=k;
@@ -57,6 +58,7 @@ export default function App(){
   if(!st.loaded)content=null;
   else if(isLogin)content=<LoginScreen dispatch={dispatch}/>;
   else if(st.screen==="menu")content=<Menu dispatch={dispatch} stats={st.stats} bestStreak={st.bestStreak} nickname={st.nickname}/>;
+  else if(st.screen==="session")content=<SessionFlow audio={audio} dispatch={dispatch} streak={st.streak} st={st} weak={st.sessionWeak}/>;
   else content=<ModeScreen modeId={st.screen} audio={audio} dispatch={dispatch} streak={st.streak}/>;
 
   return(

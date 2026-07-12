@@ -45,17 +45,36 @@ export default function Menu({dispatch,stats,bestStreak,nickname}:any){
           <div className="text-purple-400 text-xs mt-1">{t.ui.bestStreak}: {bestStreak}</div>
         </div>
       )}
-      <div className="flex gap-2 mt-1">
-        <button onClick={()=>setShowLB(true)}
-          className="px-4 py-2 rounded-xl text-sm font-bold text-purple-200 hover:scale-105 active:scale-95 transition-transform"
-          style={{backgroundColor:"rgba(167,139,250,.15)",border:"1px solid rgba(167,139,250,.3)"}}>
-          🏆 {t.ui.leaderboard}
-        </button>
-        <button onClick={()=>dispatch({type:"LOGOUT"})}
-          className="px-4 py-2 rounded-xl text-sm font-bold text-red-300 hover:scale-105 active:scale-95 transition-transform"
-          style={{backgroundColor:"rgba(248,113,113,.1)",border:"1px solid rgba(248,113,113,.2)"}}>
-          {t.ui.logout}
-        </button>
+      <div className="flex flex-col gap-2 w-full max-w-sm mt-1">
+        <div className="flex gap-2">
+          <button onClick={()=>dispatch({type:"GO",screen:"session"})}
+            className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white hover:scale-105 active:scale-95 transition-transform"
+            style={{background:"linear-gradient(135deg,#7c3aed,#6d28d9)"}}>
+            {t.ui.sessionBtn}
+          </button>
+          <button onClick={()=>dispatch({type:"GO",screen:"session",weak:true})}
+            className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white hover:scale-105 active:scale-95 transition-transform"
+            style={{background:"linear-gradient(135deg,#e11d48,#be123c)"}}>
+            {t.ui.weakSpotsBtn}
+          </button>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={()=>setShowLB(true)}
+            className="flex-1 px-4 py-2 rounded-xl text-sm font-bold text-purple-200 hover:scale-105 active:scale-95 transition-transform"
+            style={{backgroundColor:"rgba(167,139,250,.15)",border:"1px solid rgba(167,139,250,.3)"}}>
+            🏆 {t.ui.leaderboard}
+          </button>
+          <a href="guide/" target="_blank" rel="noopener noreferrer"
+            className="flex-1 px-4 py-2 rounded-xl text-sm font-bold text-purple-200 hover:scale-105 active:scale-95 transition-transform text-center"
+            style={{backgroundColor:"rgba(167,139,250,.15)",border:"1px solid rgba(167,139,250,.3)"}}>
+            {t.ui.guideBtn}
+          </a>
+          <button onClick={()=>dispatch({type:"LOGOUT"})}
+            className="flex-1 px-4 py-2 rounded-xl text-sm font-bold text-red-300 hover:scale-105 active:scale-95 transition-transform"
+            style={{backgroundColor:"rgba(248,113,113,.1)",border:"1px solid rgba(248,113,113,.2)"}}>
+            {t.ui.logout}
+          </button>
+        </div>
       </div>
     </div>
   );

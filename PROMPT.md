@@ -58,20 +58,56 @@ Hosting: static `dist/` served by nginx on Hetzner VPS at
    stores plaintext. This is deliberately lightweight (no salt, no rate
    limiting) — proportionate to a for-fun leaderboard, not a real auth system.
 
-## Remaining known gaps
+## Round 3: Session mode, Weak Spots, mnemonic hints, BPM compare, guide page
+1. **Session mode** (`modes/Session.tsx`) — setup screen (pick modes, difficulty,
+   round count 10/15/20/30) -> mixed-mode runner -> summary (per-mode accuracy delta,
+   XP gained, ▲/▼ vs last session via `localStorage["earforge-last-session"]`).
+   Each mode component now accepts an `onAdvance` prop: when set, "Next" hands
+   control back to the session runner instead of generating another same-mode round.
+   `SessionRunner` forces a remount per round via `key={idx}` so every mode always
+   starts from a fresh internal round state regardless of which mode is next.
+2. **IMPORTANT side-effect fix**: adding Session mode surfaced a real bug — CORRECT/
+   WRONG dispatches used to bucket stats under `st.screen`, which works standalone
+   (screen === modeId) but breaks in a session (screen === "session" while multiple
+   modes cycle underneath). Fixed by passing `mode` explicitly through
+   `useGameFB(streak, dispatch, modeId)` -> `dispatch({type, mode: modeId})` ->
+   reducer uses `a.mode || st.screen`. This also makes standalone stats tracking
+   more robust in general, not just session-safe.
+3. **Weak Spots mode** — same Session runner, auto-configured: skips setup, pulls
+   only modes with `srs.getWeakKeys(mode).length>0`, rounds = min(weakCount*2, 20).
+   Empty state ("🎉 all clean") when nothing is currently weighted anywhere.
+   `weakOnly` prop threads into each mode's round generator to hard-filter the
+   candidate pool to only currently-weak keys (falls back to the full weak set,
+   never to the full pool, so it never silently becomes a normal round).
+4. **Mnemonic hints on wrong answers** — `IV_MNEMONIC`/`CHORD_MNEMONIC` in
+   constants.ts (same source material as the tutorials, condensed to one line),
+   keyed by semitone count / chord-quality index (language-independent identity).
+   Shown inline under the options in Intervals/Chords only when the answer was wrong.
+5. **BPM A/B compare** — "🔊 Compare" button after answering plays the target tempo
+   then the guessed tempo back to back (4 beats each); more useful than reading
+   "faster/slower" as text.
+6. **Comprehensive guide page** — `public/guide/index.html`, static (not part of
+   the SPA build), served at `/earforge/guide/`. Dark theme pulled from the app's
+   own palette (per-mode accent colors), sidebar nav, glossary, mechanics
+   explained (XP/streak, SRS weighting, sessions, weak spots, leaderboard auth),
+   collapsible use-case scenarios. Linked from the in-app menu (opens in a new tab).
+
+## Known gaps / rough edges
 - **BPM/pitch detection ceiling** — hard difficulty tolerances (±5% BPM,
   2-octave Note ID) were picked by feel, not tested against real listeners.
-  If revisiting difficulty curves, get a few practice sessions of data first
-  (the leaderboard's `pct`/`total` per mode is exactly this data).
-- **SRS weight isn't visible anywhere** — no UI shows which items are
-  currently "due"/weighted. A small debug view or a "review weak spots"
-  mode that only draws from the weighted pool would make the mechanism
-  legible instead of invisible.
-- **Chord mode icon 🎸 is a placeholder pick** — collides conceptually with
-  "guitar" when this is chords in general (works fine on a keyboard/DAW
-  context too). Not urgent, just noting the choice was arbitrary.
-- **Real PWA icons** — current ones are a generated purple square with "EF".
-  Fine functionally, but swap them for actual artwork when there's time.
+- **SRS weight still isn't visible in the main UI** — Weak Spots mode surfaces it
+  indirectly (only weak items appear), but there's no raw "here's your weight per
+  item" debug view.
+- **Abandoning a session mid-way** (hitting the header back-arrow) just unmounts
+  SessionFlow — no confirmation, no partial summary. Low-stakes given how short
+  sessions are, but worth a confirm dialog if it becomes annoying.
+- **PORT hardcoded in server/leaderboard.js** — deliberately, not process.env.PORT.
+  The VPS shell/pm2 environment carries an ambient PORT var from unrelated tooling
+  that silently overrode the default on every `pm2 restart --update-env`, crash-
+  looping the service on EADDRINUSE. If this ever needs to be configurable again,
+  use a dedicated env var name (e.g. EARFORGE_PORT), not the generic PORT.
+- **Chord mode icon 🎸** and the **PWA icons** (generated "EF" placeholders) are
+  both cosmetic placeholders, fine functionally, swap whenever.
 
 ## Constraints when making changes
 - Keep the audio engine dependency-free (no Tone.js, plain Web Audio) —

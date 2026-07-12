@@ -94,3 +94,32 @@ export function getMult(s:number){return s>=9?5:s>=5?3:s>=2?2:1}
 export function buildChord(r:string,o:number,p:number[]){return p.map(s=>noteAt(r,o,s))}
 export function randInt(a:number,b:number){return Math.floor(randBuf.get()*(b-a+1))+a}
 export function pick<T>(arr:T[]):T{return arr[Math.floor(randBuf.get()*arr.length)]}
+
+// ─── Mnemonics (used for inline "why did I mix this up" hints after a wrong answer) ──
+// Interval mnemonics keyed by semitone count (language-independent identity, unlike
+// the interval name which differs ua/en). Same source material as the tutorial text,
+// condensed to one line so it fits under a wrong-answer without a modal.
+export const IV_MNEMONIC={
+  ua:{1:"«Jaws» (тема акули): тісно, тривожно, хроматика",2:"«Happy Birthday» перші дві ноти: природно, спокійно",
+      3:"«Smoke on the Water» / «Greensleeves»: сумно, меланхолійно",4:"«Oh When the Saints»: радісно, тепло",
+      5:"«Here Comes the Bride»: чиста, стійка, «пуста»",6:"«The Simpsons» тема: нестабільна, тривожна",
+      7:"«Star Wars» / «Twinkle Twinkle»: порожня, героїчна",8:"«The Entertainer» (Joplin): ніжна, трохи сумна",
+      9:"«My Way» (Sinatra): широка, піднесена",10:"«Somewhere» (West Side Story): романтична, напружена",
+      11:"«Take on Me» (A-ha): дуже широка, прагне вгору",12:"«Somewhere Over the Rainbow»: тріумфальний стрибок"},
+  en:{1:"'Jaws' shark theme: tight, tense, chromatic",2:"'Happy Birthday' first 2 notes: natural, calm",
+      3:"'Smoke on the Water' riff / 'Greensleeves': sad, dark",4:"'Oh When the Saints': joyful, warm",
+      5:"'Here Comes the Bride': pure, resolved",6:"'The Simpsons' theme: unstable, tense",
+      7:"'Star Wars' / 'Twinkle Twinkle': open, heroic",8:"'The Entertainer' (Joplin): gentle, wistful",
+      9:"'My Way' (Sinatra): wide, soaring",10:"'Somewhere' (West Side Story): romantic, expansive",
+      11:"'Take on Me' (A-ha): very wide, reaching up",12:"'Over the Rainbow': triumphant leap"},
+};
+
+// Chord quality mnemonics — index-aligned with the CHORDS arrays above (0=maj..5=dom7).
+export const CHORD_MNEMONIC={
+  ua:["Стабільний, яскравий — основа мажору","Стабільний, темніший — основа мінору",
+      "Обидва інтервали «стиснуті» — тривожно, нестійко","Розтягнутий, симетричний — нема відчуття «дому»",
+      "Мажор + напружена нота зверху — більше кольору","Домінантний — тягне до вирішення в тоніку"],
+  en:["Stable, bright — the major sound","Stable, darker — the minor sound",
+      "Both intervals squeezed — tense, unstable","Stretched, symmetrical — no sense of 'home'",
+      "Major + a tense note on top — more color","Dominant — wants to resolve to the tonic"],
+};
