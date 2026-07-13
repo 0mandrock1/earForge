@@ -15,6 +15,16 @@ export function freqFromNote(name:string){return freqFromMidi(midiFromNote(name)
 export function useAudio(){
   const ctxRef=useRef<AudioContext|null>(null);
   const activeRef=useRef<{osc:OscillatorNode,gain:GainNode}[]>([]);
+  // Destination that raw oscillators connect to. Normally this is ctx.destination,
+  // but on iOS/iPadOS Safari raw Web Audio output goes through the "ambient" audio
+  // session category, which is muted by the hardware Ring/Silent switch (if the
+  // device has one) even at full volume — while <audio>/<video> elements use the
+  // "playback" category and ignore that switch (that's why e.g. YouTube still plays).
+  // Fix: route our synthesized audio into a MediaStreamAudioDestinationNode and play
+  // that stream through a real, invisible <audio> element — this forces the whole
+  // page onto the "playback" category, so the switch position stops mattering.
+  const mediaDestRef=useRef<MediaStreamAudioDestinationNode|null>(null);
+  const audioElRef=useRef<HTMLAudioElement|null>(null);
 
   // Async: creates context if needed, awaits resume().
   // iOS Safari requires resume() to fully resolve before scheduling any audio.
@@ -23,15 +33,31 @@ export function useAudio(){
     const AC=window.AudioContext||(window as any).webkitAudioContext;
     if(!ctxRef.current||ctxRef.current.state==="closed"){
       ctxRef.current=new AC();
-      // iOS unlock: playing a silent buffer forces the audio session to activate,
-      // so subsequent oscillator scheduling actually produces sound.
       try{
         const buf=ctxRef.current.createBuffer(1,1,ctxRef.current.sampleRate);
         const src=ctxRef.current.createBufferSource();
         src.buffer=buf;src.connect(ctxRef.current.destination);src.start(0);
       }catch(e){}
+
+      // Bridge to a real <audio> element so we land in the "playback" session
+      // category (bypasses Ring/Silent switch on iOS/iPadOS).
+      try{
+        mediaDestRef.current=ctxRef.current.createMediaStreamDestination();
+        const el=document.createElement("audio");
+        el.srcObject=mediaDestRef.current.stream;
+        el.setAttribute("playsinline","");
+        (el as any).playsInline=true;
+        el.autoplay=true;
+        el.style.display="none";
+        document.body.appendChild(el);
+        audioElRef.current=el;
+        el.play().catch(()=>{});
+      }catch(e){}
     }
     if(ctxRef.current.state!=="running")await ctxRef.current.resume();
+    if(audioElRef.current&&audioElRef.current.paused){
+      try{await audioElRef.current.play();}catch(e){}
+    }
     return ctxRef.current;
   },[]);
 
@@ -45,8 +71,10 @@ export function useAudio(){
     activeRef.current=[];
   },[]);
 
-  // Internal tone scheduler — receives already-running ctx
+  // Internal tone scheduler — receives already-running ctx. Connects to the
+  // MediaStreamAudioDestination bridge when available, falling back to ctx.destination.
   const _tone=useCallback((ctx:AudioContext,freq:number,t:number,dur:number,vol=0.3)=>{
+    const dest=mediaDestRef.current??ctx.destination;
     const osc=ctx.createOscillator(),gain=ctx.createGain();
     osc.type="triangle";
     osc.frequency.setValueAtTime(freq,t);
@@ -54,17 +82,18 @@ export function useAudio(){
     gain.gain.linearRampToValueAtTime(vol*audioVol.v,t+0.015);
     gain.gain.setValueAtTime(vol*audioVol.v,t+dur*0.7);
     gain.gain.linearRampToValueAtTime(0,t+dur);
-    osc.connect(gain);gain.connect(ctx.destination);
+    osc.connect(gain);gain.connect(dest);
     osc.start(t);osc.stop(t+dur+0.1);
     activeRef.current.push({gain,osc});
     osc.onended=()=>{activeRef.current=activeRef.current.filter(n=>n.osc!==osc);};
   },[]);
 
   const _click=useCallback((ctx:AudioContext,t:number,vol=0.4)=>{
+    const dest=mediaDestRef.current??ctx.destination;
     const osc=ctx.createOscillator(),gain=ctx.createGain();
     osc.type="square";osc.frequency.setValueAtTime(1000,t);
     gain.gain.setValueAtTime(vol*audioVol.v,t);gain.gain.linearRampToValueAtTime(0,t+0.03);
-    osc.connect(gain);gain.connect(ctx.destination);
+    osc.connect(gain);gain.connect(dest);
     osc.start(t);osc.stop(t+0.05);
   },[]);
 
@@ -75,8 +104,6 @@ export function useAudio(){
     _tone(ctx,freqFromNote(note),ctx.currentTime+0.15,dur);
   },[stopAll,ensureCtx,_tone]);
 
-  // del<dur overlaps note2 attack with note1 release tail (independent gain envelopes
-  // from _tone) -> audible crossfade instead of a silent gap between the two notes.
   const playInterval=useCallback(async(n1:string,n2:string,del=0.34)=>{
     stopAll();const ctx=await ensureCtx(),t=ctx.currentTime+0.15;
     _tone(ctx,freqFromNote(n1),t,0.4);_tone(ctx,freqFromNote(n2),t+del,0.4);
@@ -97,7 +124,6 @@ export function useAudio(){
     _tone(ctx,freqFromNote(n1),t,0.6,0.25);_tone(ctx,freqFromNote(n2),t,0.6,0.25);
   },[stopAll,ensureCtx,_tone]);
 
-  // N-note chord, all struck together — used by Chords mode and the Key tutorial.
   const playChord=useCallback(async(notes:string[])=>{
     stopAll();const ctx=await ensureCtx(),t=ctx.currentTime+0.15;
     notes.forEach(n=>_tone(ctx,freqFromNote(n),t,0.7,0.22));

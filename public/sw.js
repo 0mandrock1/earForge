@@ -1,6 +1,7 @@
-// Stale-while-revalidate cache for the app shell. Audio is synthesized (Web Audio),
-// so caching JS/CSS/HTML is enough for full offline play once the app has loaded once.
-const CACHE = "earforge-v1";
+// Network-first for the app shell (index.html/JS/CSS) so fixes always reach
+// clients on next load, with cache as an offline fallback only. Audio is
+// synthesized (Web Audio), so caching JS/CSS/HTML is enough for offline play.
+const CACHE = "earforge-v3";
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (e) => {
   e.waitUntil(
@@ -14,14 +15,14 @@ self.addEventListener("fetch", (e) => {
   if (url.pathname.includes("/api/")) return; // never cache the leaderboard API
   if (url.origin !== location.origin) return; // leave random.org etc alone
   e.respondWith(
-    caches.open(CACHE).then(cache =>
-      cache.match(e.request).then(cached => {
-        const network = fetch(e.request).then(res => {
-          if (res.ok) cache.put(e.request, res.clone());
-          return res;
-        }).catch(() => cached);
-        return cached || network;
-      })
+    fetch(e.request).then(res => {
+      if (res.ok) {
+        const clone = res.clone();
+        caches.open(CACHE).then(cache => cache.put(e.request, clone));
+      }
+      return res;
+    }).catch(() =>
+      caches.open(CACHE).then(cache => cache.match(e.request))
     )
   );
 });
