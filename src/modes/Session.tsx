@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { CSS, MODES_META, DIFFS_META, pick } from "../constants";
 import { useT } from "../i18n";
 import { getWeakKeys } from "../srs";
+import { aggregateTier } from "../adaptiveDiff";
 import NoteIdMode from "./NoteId";
 import IntervalsMode from "./Intervals";
 import BpmMode from "./Bpm";
@@ -20,7 +21,7 @@ function saveLastSession(d:any){try{localStorage.setItem(LS_KEY,JSON.stringify(d
 function SessionSetup({onStart}:{onStart:(cfg:any)=>void}){
   const t=useT();
   const [modes,setModes]=useState<string[]>(MODES_META.map(m=>m.id));
-  const [diff,setDiff]=useState("medium");
+  const [diff,setDiff]=useState<string>(()=>aggregateTier(MODES_META.map(m=>m.id)));
   const [rounds,setRounds]=useState(15);
   const toggle=(id:string)=>setModes(m=>m.includes(id)?m.filter(x=>x!==id):[...m,id]);
   return(

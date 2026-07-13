@@ -3,6 +3,7 @@ import { CSS, getMult, MAJOR, MINOR, buildChord, randBuf, MODES_META, DIFFS_META
 import { useT, useLang } from "../i18n";
 import { audioVol, useAudio } from "../audio";
 import { loadSkips, saveSkips } from "../storage";
+import { recordRound } from "../adaptiveDiff";
 
 // ─── Particles / Level Up / Lang Toggle ────────────────────────────────────────
 export function Particles({trigger}:{trigger:number}){
@@ -147,9 +148,9 @@ export function useGameFB(streak:number,dispatch:React.Dispatch<any>,modeId:stri
       const g=10*getMult(streak);fid.current++;
       setFloats(f=>[...f.slice(-3),{xp:g,id:fid.current}]);
       if(streak>=2){setSPop(true);setTimeout(()=>setSPop(false),400);}
-      setFlash("correct");setPtrig(p=>p+1);dispatch({type:"CORRECT",mode:modeId});
+      setFlash("correct");setPtrig(p=>p+1);dispatch({type:"CORRECT",mode:modeId});recordRound(modeId,true);
     },[streak,dispatch,modeId]),
-    onBad:useCallback(()=>{setFlash("wrong");dispatch({type:"WRONG",mode:modeId});},[dispatch,modeId]),
+    onBad:useCallback(()=>{setFlash("wrong");dispatch({type:"WRONG",mode:modeId});recordRound(modeId,false);},[dispatch,modeId]),
     reset:useCallback(()=>setFlash(null),[]),
   };
 }
@@ -214,38 +215,6 @@ export function OptGrid({opts,picked,ans,locked,onPick,cols=2}:any){
           style={{backgroundColor:bg,animation:anim,border:brd,transition:"background-color .2s"}}>
           <span className="absolute top-1 left-2 text-[10px] opacity-40">{i+1}</span>{o}</button>;
       })}
-    </div>
-  );
-}
-
-// ─── Difficulty Picker ──────────────────────────────────────────────────────────
-export function DiffPicker({modeId,onPick}:{modeId:string,onPick:(d:string)=>void}){
-  const t=useT();
-  const meta=MODES_META.find(m=>m.id===modeId)!;
-  const tMode=(t.modes as any)[modeId];
-  return(
-    <div className="flex-1 flex flex-col items-center justify-center px-4 gap-5 pb-8" style={{animation:"fadeIn .3s"}}>
-      <style>{CSS}</style>
-      <span style={{fontSize:48}}>{meta.icon}</span>
-      <h2 className="text-xl font-bold text-white">{tMode.name}</h2>
-      <p className="text-purple-300 text-sm">{t.ui.chooseDiff}</p>
-      <div className="flex flex-col gap-3 w-full max-w-xs">
-        {DIFFS_META.map(d=>{
-          const td=(t.diffs as any)[d.id];
-          return(
-            <button key={d.id} onClick={()=>onPick(d.id)}
-              className="flex items-center gap-3 p-4 rounded-xl text-left hover:scale-[1.02] active:scale-95 transition-transform"
-              style={{backgroundColor:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.1)"}}>
-              <span style={{fontSize:24}}>{d.emoji}</span>
-              <div className="flex-1">
-                <div className="text-white font-bold text-sm">{td.label}</div>
-                <div className="text-purple-300 text-xs">{(td as any)[modeId]}</div>
-              </div>
-              <span className="text-purple-400">→</span>
-            </button>
-          );
-        })}
-      </div>
     </div>
   );
 }

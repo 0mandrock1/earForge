@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EarForge — хаки</title>
+<style>
+:root{
+  --bg:#0f0a2e; --bg2:#1a0a2e; --surface:rgba(255,255,255,.05); --surface2:rgba(255,255,255,.08);
+  --border:rgba(167,139,250,.25); --text:#f1f0fb; --text-dim:#b8b3d9; --text-faint:#8b85b8;
+  --accent:#a78bfa; --accent2:#7c3aed; --warn:#fbbf24;
+  --noteId:#8b5cf6; --intervals:#06b6d4; --bpm:#f59e0b; --key:#10b981; --chords:#f43f5e;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:linear-gradient(160deg,var(--bg2) 0%,var(--bg) 55%,#150a35 100%);color:var(--text);line-height:1.65}
+a{color:var(--accent)}
+h1,h2,h3{font-weight:800;letter-spacing:-.01em}
+h2{font-size:22px;margin:0 0 14px;padding-top:8px;border-top:1px solid var(--border)}
+h3{font-size:16px;color:var(--accent);margin:22px 0 8px}
+p{color:var(--text-dim);margin:8px 0}
+ul{color:var(--text-dim);margin:8px 0;padding-left:20px}
+li{margin:6px 0}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:999px;
+  background:var(--surface2);border:1px solid var(--border);font-size:12px;font-weight:700;color:var(--text-dim)}
+#sidebar{position:fixed;top:0;left:0;width:250px;height:100vh;overflow-y:auto;background:rgba(10,6,30,.9);
+  border-right:1px solid var(--border);padding:20px 16px;transition:width .25s ease,padding .25s ease;z-index:20}
+#sidebar.collapsed{width:0;padding:20px 0;overflow:hidden}
+#sidebar h4{color:var(--text-faint);font-size:11px;text-transform:uppercase;letter-spacing:.08em;margin:18px 0 8px}
+#sidebar a{display:block;color:var(--text-dim);text-decoration:none;font-size:13.5px;padding:6px 10px;border-radius:8px;margin-bottom:2px}
+#sidebar a:hover,#sidebar a.active{background:var(--surface2);color:var(--text)}
+#toggleBtn{position:fixed;top:16px;left:262px;z-index:30;width:36px;height:36px;border-radius:10px;border:1px solid var(--border);
+  background:var(--surface2);color:var(--text);cursor:pointer;font-size:16px;transition:left .25s ease}
+body.sidebar-collapsed #toggleBtn{left:16px}
+#main{margin-left:250px;padding:70px 32px 80px;max-width:760px;transition:margin-left .25s ease}
+body.sidebar-collapsed #main{margin-left:0}
+.hero{margin-bottom:8px}
+.hero .badges{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 6px}
+.modecard{border-radius:14px;padding:16px 18px;margin:12px 0;background:var(--surface);border-left:4px solid var(--c,var(--accent))}
+.modecard h3{margin:0 0 4px;color:var(--c,var(--accent))}
+.modecard .tag{font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.05em}
+.modecard summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;
+  font-weight:800;font-size:16px;color:var(--c,var(--accent));padding:2px 0}
+.modecard summary::-webkit-details-marker{display:none}
+.modecard summary:before{content:"▸";color:var(--c,var(--accent));font-size:13px}
+.modecard[open] summary:before{content:"▾"}
+.modecard summary .tag{margin-left:auto}
+.modecard ul{margin-top:14px}
+.tip{background:rgba(167,139,250,.08);border:1px solid var(--border);border-radius:12px;padding:12px 16px;margin:10px 0}
+.tip b{color:var(--accent)}
+.warn{background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.3);border-radius:12px;padding:12px 16px;margin:10px 0}
+.warn b{color:var(--warn)}
+code{background:rgba(255,255,255,.08);padding:1px 6px;border-radius:5px;font-size:.9em}
+footer{color:var(--text-faint);font-size:12.5px;margin-top:40px;padding-top:16px;border-top:1px solid var(--border)}
+@media(max-width:768px){
+  #sidebar{width:0;padding:20px 0;overflow:hidden}
+  #sidebar.open{width:78vw;max-width:280px;padding:20px 16px;box-shadow:0 0 40px rgba(0,0,0,.5)}
+  #toggleBtn{left:16px}
+  body.sidebar-collapsed #toggleBtn{left:16px}
+  #main{margin-left:0;padding:70px 20px 60px}
+  h2{font-size:19px}
+}
+</style>
+</head>
+<body class="sidebar-collapsed">
+
+<button id="toggleBtn" onclick="toggleSidebar()"><span class="icon-close">←</span><span class="icon-open" style="display:none">☰</span></button>
+
+<nav id="sidebar" class="collapsed">
+  <div class="pill">⚡ EarForge</div>
+  <h4>Зміст</h4>
+  <a href="#noteId">Note ID</a>
+  <a href="#intervals">Intervals</a>
+  <a href="#bpm">BPM Tap</a>
+  <a href="#key">Key Detect</a>
+  <a href="#chords">Chords</a>
+  <a href="#adaptive">Адаптивна складність</a>
+  <a href="#meta">Мета-хаки</a>
+  <h4>Дивись також</h4>
+  <a href="../guide/">📖 Повна довідка →</a>
+</nav>
+
+<main id="main">
+
+<div class="hero">
+  <h1>⚡ EarForge — хаки по режимах</h1>
+  <div class="badges">
+    <span class="pill">📖 ~7 хв читання</span>
+    <span class="pill">🎯 конкретні прийоми, не теорія</span>
+  </div>
+  <p>Це не пояснення механік (те — в <a href="../guide/">повній довідці</a>) — тут коротко
+  й конкретно: за що чіплятись вухом у кожному режимі, щоб прогрес йшов швидше за ті самі
+  хвилини практики. Кожен режим згорнутий — розгорни лише той, що потрібен зараз.</p>
+</div>
+
+<h2 id="noteId">🎵 Note ID</h2>
+<details class="modecard" style="--c:var(--noteId)">
+  <summary>Note ID <span class="tag">7 хаків</span></summary>
+  <ul>
+    <li><b>Прив'яжи кожну ноту до пісні або відчуття.</b> Не намагайся почути «C» абстрактно —
+    в тебе має бути персональний якір: «ця нота — як перша нота мого улюбленого рифу».
+    Якорі мають бути твоїми власними, не чужими — запозичена асоціація приживається гірше.</li>
+    <li><b>Завжди слухай A4 (🔊 кнопка зверху) перед раундом,</b> поки якорі ще не міцні —
+    порівняння відносно відомої точки набагато надійніше за вгадування наосліп.</li>
+    <li><b>Октава — це шум, ігноруй її спочатку.</b> На старті вчись впізнавати клас ноти
+    (C, C#, D...), а не точну октаву — розрізнення октави приходить саме останнім і окремо.</li>
+    <li><b>Це найповільніший режим — не порівнюй прогрес з Intervals.</b> Абсолютний слух
+    росте місяцями, а не днями; стабільні 70-85% точності тут — вже добрий результат.</li>
+    <li><b>Чорні клавіші плутаються найдовше</b> — почни звужувати увагу саме туди, коли білі
+    ноти вже впізнаються надійно: C#/D#/F#/G#/A# зазвичай піднімаються останніми.</li>
+    <li><b>Наспівай ноту перед тим, як дивитись на варіанти.</b> Якщо голос попав у ноту до
+    того, як побачив підказки-літери — це справжнє впізнавання, не підбір з шести варіантів.</li>
+    <li><b>Одна нота = один раунд, без поспіху.</b> На відміну від Intervals/Chords тут нема
+    другої точки для порівняння — витримай паузу перед відповіддю, поспіх тут шкодить найбільше.</li>
+  </ul>
+</details>
+
+<h2 id="intervals">🎼 Intervals</h2>
+<details class="modecard" style="--c:var(--intervals)">
+  <summary>Intervals <span class="tag">7 хаків</span></summary>
+  <ul>
+    <li><b>Якорі-пісні під кожен інтервал уже вшиті в застосунок</b> — вони спливають підказкою
+    під варіантами відповіді після помилки. Не чекай помилки: заздалегідь запам'ятай хоч по
+    одному якорю на інтервал (наприклад ч5 = «Star Wars», м2 = «Jaws»), це найшвидший шлях
+    до впізнавання без рахування півтонів.</li>
+    <li><b>Раннього плутають малу/велику терцію (м3/в3) — слухай на «мажор проти мінор».</b>
+    Це той самий колір, що відрізняє мажорний акорд від мінорного — якщо чуєш «сумно» — м3,
+    «весело» — в3.</li>
+    <li><b>Ч4 проти тритону — найтонша межа в цьому режимі.</b> Тритон завжди звучить
+    «нестабільно, хоче кудись вирішитись»; ч4 — стійкіше, «завершено». Якщо вагаєшся —
+    став на тритон, коли є відчуття напруги.</li>
+    <li><b>Співай інтервал вголос перед тим, як тиснути відповідь.</b> Якщо можеш проспівати —
+    ти справді почув, а не вгадав із чотирьох варіантів.</li>
+    <li><b>Широкі інтервали (м7, в7, октава) плутають напрям, не розмір.</b> Якщо не певен —
+    заспівай від нижньої ноти вгору: часто виявляється, що розмір розпізнано правильно, а
+    здалось «замало» через незвичну ширину.</li>
+    <li><b>Гармонічний режим програвання (обидві ноти разом) — найважчий.</b> Якщо в
+    налаштуваннях є вибір ↑/↓/♩, почни з висхідного — легше почути напрям, коли ноти йдуть
+    по черзі.</li>
+    <li><b>Найкорисніший режим із п'яти для реальної музики</b> — якщо часу мало, качай
+    саме його: підбір на слух і транскрипція напряму спираються на відносний слух.</li>
+  </ul>
+</details>
+
+<h2 id="bpm">🥁 BPM Tap</h2>
+<details class="modecard" style="--c:var(--bpm)">
+  <summary>BPM Tap <span class="tag">7 хаків</span></summary>
+  <ul>
+    <li><b>Не рахуй — відбивай тілом.</b> Кнопка TAP існує саме для цього: нога чи палець
+    тримають темп надійніше, ніж спроба порахувати удари подумки.</li>
+    <li><b>Найчастіша помилка — подвоєння/половинення темпу</b> (відповідь удвічі швидше або
+    повільніше за ціль). Якщо результат вийшов «дивно круглим» (рівно ×2 чи ÷2 від очікуваного) —
+    перевір саме цю гіпотезу першою.</li>
+    <li><b>Використовуй «🔊 Порівняти» після кожної відповіді,</b> навіть правильної — почути
+    ціль і свою відповідь одну за одною тренує внутрішній метроном швидше, ніж читання
+    «швидше/повільніше» текстом.</li>
+    <li><b>Не намагайся тримати рахунок на 4 удари — тримай на 2.</b> Довші цикли легше збити з
+    пантелику; парний пульс (раз-два, раз-два) стабільніший для оцінки на слух.</li>
+    <li><b>Тапай хоч 5-6 разів, а не 3.</b> Перші два-три тапи майже завжди «підлаштовуються»
+    після прослуханого темпу — точність оцінки помітно росте вже з четвертого інтервалу.</li>
+    <li><b>Не дивись на числа під час тапу.</b> Проміжний BPM оновлюється наживо і легко
+    почати підганяти рухи під цифру замість того, щоб довіритись тілу — закрий очі, якщо заважає.</li>
+    <li><b>Єдиний режим без ваги помилок (SRS)</b> — тут нема «слабких місць» для повторення,
+    тому прогрес видно тільки за трендом точності в Сесії, не за окремим пунктом.</li>
+  </ul>
+</details>
+
+<h2 id="key">🎹 Key Detect</h2>
+<details class="modecard" style="--c:var(--key)">
+  <summary>Key Detect <span class="tag">7 хаків</span></summary>
+  <ul>
+    <li><b>Слухай останню ноту каденції (I), не першу.</b> Прогресія I–IV–V–I «тягне додому» —
+    останній акорд і є тонікою; якщо загубився в середині, орієнтуйся на те, куди все
+    «приземлилось» в кінці.</li>
+    <li><b>Мажор/мінор — та сама якість, що і в Chords.</b> Якщо один з режимів дається легше —
+    перенось інтуїцію: мажорний «дім» звучить світліше, мінорний — темніше, і це та сама
+    різниця, що між мажорним і мінорним акордом.</li>
+    <li><b>Наспівай тонічну ноту одразу після прогресії,</b> перш ніж дивитись на варіанти —
+    якщо голос «сам знайшов» ноту, варіант відповіді стане очевидним.</li>
+    <li><b>V (домінанта) — найнапруженіший акорд у прогресії,</b> явно «хоче» вирішитись у I.
+    Якщо відчуваєш цю напругу перед фінальним акордом — це орієнтир, де саме «дім».</li>
+    <li><b>IV (субдомінанта) звучить «м'якше», ніж V.</b> Якщо переплутав порядок акордів на
+    слух — IV завжди спокійніший, менш напружений, ніж V; це допомагає зорієнтуватись навіть
+    якщо загубив рахунок долей.</li>
+    <li><b>Мінорні тональності легше сплутати одна з одною, ніж з мажорними.</b> Різниця
+    мажор/мінор чується одразу; різниця між сусідніми мінорними тональностями — тонша,
+    приділяй їй окрему увагу, коли точність застрягла.</li>
+    <li><b>Тренуй разом з Chords.</b> Обидва режими про одну й ту саму мажор/мінор якість —
+    прогрес в одному майже завжди підтягує інший.</li>
+  </ul>
+</details>
+
+<h2 id="chords">🎸 Chords</h2>
+<details class="modecard" style="--c:var(--chords)">
+  <summary>Chords <span class="tag">7 хаків</span></summary>
+  <ul>
+    <li><b>Спочатку тільки мажор/мінор — не хапайся за всі 6 якостей одразу.</b> Адаптивна
+    складність і так почне з легкого рівня (3 варіанти); дай їй час підняти планку самій,
+    замість форсувати hard вручну через Сесію.</li>
+    <li><b>Зменшений (dim) звучить «тривожно й затиснуто» — обидва інтервали малі.</b>
+    Збільшений (aug) — навпаки, «розтягнутий», нема відчуття завершеності: симетрична
+    структура, яка нікуди явно не «тягне».</li>
+    <li><b>Домінантсептакорд (dom7) — найбільш «хоче вирішитись».</b> Якщо чуєш мажорний акорд
+    з додатковою напруженою нотою зверху, яка явно тягне кудись далі — це, найімовірніше,
+    dom7, а не мажор7 (той стабільніший, «кольоровіший», без тяги).</li>
+    <li><b>Слухай ноти акорду по одній подумки, знизу вгору,</b> перш ніж вирішувати —
+    навіть коротка пауза перед відповіддю тут окупається більше, ніж в інших режимах,
+    бо всі ноти звучать одночасно.</li>
+    <li><b>Мажор7 і домінантсептакорд плутають найчастіше на hard.</b> Різниця в одній ноті:
+    мажор7 звучить «стабільно й кольорово», dom7 — «нестабільно, хоче кудись рухатись». Якщо
+    відповідь не тягне нікуди — це майже завжди мажор7.</li>
+    <li><b>Спробуй розкласти акорд подумки в арпеджіо,</b> навіть якщо в грі він звучить разом —
+    уявне розкладання на окремі ноти часто виявляє якість швидше, ніж спроба «почути все
+    відразу».</li>
+    <li><b>Найновіший режим — якщо щось не сходиться з підказками,</b> звірся з підказкою під
+    відповідями (з'являється при помилці) — вона прив'язана до канонічного порядку якостей.</li>
+  </ul>
+</details>
+
+<h2 id="adaptive">🎚️ Адаптивна складність — як з нею грати</h2>
+<p>Рівень (🟢/🟡/🔴) над кнопкою «Слухати» рухається сам за точністю в цьому конкретному
+режимі — не по всьому застосунку одразу (детальний механізм — в <a href="../guide/#diff">довідці</a>).
+Що з цим робити практично:</p>
+<div class="tip"><b>Не намагайся «зламати» рівень навмисним вгадуванням.</b> Якщо навмисно
+відповідати неправильно, щоб рівень впав — тренування стає марним: суть у тому, щоб рівень
+відображав реальний навик, а не був цифрою, яку можна підкрутити.</div>
+<div class="tip"><b>Якщо рівень застряг на «легко» довше, ніж здається розумним</b> — це
+означає, що точність ще не тримається стабільно вище 85% за останні ~10-20 раундів. Це
+нормально: поріг навмисно консервативний, щоб не піднімати планку на випадковому вдалому
+стріку.</div>
+<div class="warn"><b>Виняток — Сесія.</b> Там складність і далі обирається вручну (з
+підказкою — середнім по поточних адаптивних рівнях). Якщо готуєшся до конкретної події
+й свідомо хочеш «прогнати на hard» — це саме той екран, а не звичайний одиночний режим.</div>
+
+<h2 id="meta">🧠 Мета-хаки (для будь-якого режиму)</h2>
+<ul>
+  <li><b>Слабкі місця — одразу після сесії, не наступного дня.</b> Вага помилок спадає з
+  часом; вікно, коли повторення найдешевше, коротке (див. <a href="../guide/#weak">довідку</a>).</li>
+  <li><b>Точність 70-85% — це і є ціль, не побічний ефект.</b> Якщо стабільно вище — нудно
+  і немає росту; якщо стабільно нижче — забагато вгадування. Адаптивна складність тепер
+  тримає це вікно сама, але розуміння того, чому саме ця вилка, допомагає не панікувати,
+  коли рівень падає.</li>
+  <li><b>Коротко і часто б'є рідко і довго.</b> Дві сесії по 15 раундів у різний час дня
+  дають більше закріплення, ніж одна довга сесія раз на кілька днів.</li>
+  <li><b>Не перемикай мову під час активного стріку звичок.</b> Асоціації-якорі (пісні,
+  підказки) прив'язані до мови — стабільніше тренуватись весь час в одній.</li>
+</ul>
+
+<footer>
+EarForge · <a href="../">← до застосунку</a> · <a href="../guide/">📖 Повна довідка</a> · вихідний код: <a href="https://github.com/0mandrock1/earForge" target="_blank">github.com/0mandrock1/earForge</a>
+</footer>
+
+</main>
+
+<script>
+function isMobile(){return window.innerWidth<=768}
+function toggleSidebar(){
+  const sb=document.getElementById('sidebar');
+  const close=document.querySelector('.icon-close'), open=document.querySelector('.icon-open');
+  if(isMobile()){
+    sb.classList.toggle('open');
+  } else {
+    document.body.classList.toggle('sidebar-collapsed');
+    sb.classList.toggle('collapsed');
+  }
+  const collapsed=document.body.classList.contains('sidebar-collapsed')||(isMobile()&&!sb.classList.contains('open'));
+  close.style.display=collapsed?'none':'inline';
+  open.style.display=collapsed?'inline':'none';
+}
+const links=document.querySelectorAll('#sidebar a[href^="#"]');
+const sections=[...links].map(l=>document.querySelector(l.getAttribute('href'))).filter(Boolean);
+const io=new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      links.forEach(l=>l.classList.remove('active'));
+      const id=e.target.id;
+      const active=[...links].find(l=>l.getAttribute('href')==='#'+id);
+      if(active)active.classList.add('active');
+    }
+  });
+},{rootMargin:'-20% 0px -70% 0px'});
+sections.forEach(s=>io.observe(s));
+</script>
+</body>
+</html>

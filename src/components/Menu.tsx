@@ -69,6 +69,13 @@ export default function Menu({dispatch,stats,bestStreak,nickname}:any){
             style={{backgroundColor:"rgba(167,139,250,.15)",border:"1px solid rgba(167,139,250,.3)"}}>
             {t.ui.guideBtn}
           </a>
+        </div>
+        <div className="flex gap-2">
+          <a href="hacks/" target="_blank" rel="noopener noreferrer"
+            className="flex-1 px-4 py-2 rounded-xl text-sm font-bold text-purple-200 hover:scale-105 active:scale-95 transition-transform text-center"
+            style={{backgroundColor:"rgba(167,139,250,.15)",border:"1px solid rgba(167,139,250,.3)"}}>
+            {t.ui.hacksBtn}
+          </a>
           <button onClick={()=>dispatch({type:"LOGOUT"})}
             className="flex-1 px-4 py-2 rounded-xl text-sm font-bold text-red-300 hover:scale-105 active:scale-95 transition-transform"
             style={{backgroundColor:"rgba(248,113,113,.1)",border:"1px solid rgba(248,113,113,.2)"}}>

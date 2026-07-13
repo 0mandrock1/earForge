@@ -70,25 +70,27 @@ export default function BpmMode({audio,dispatch,streak,diff,onAdvance}:any){
           </div>
           <div className="flex flex-col items-center gap-2">
             <p className="text-amber-300 text-xs">{t.ui.tapHint}</p>
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <button onClick={tap} className="w-14 h-14 rounded-full text-white font-bold text-xs shadow-lg relative z-10"
-                  style={{background:"linear-gradient(135deg,#f59e0b,#d97706)",transform:ta?"scale(.88)":"scale(1)",transition:"transform .08s"}}>TAP</button>
-                <div key={rip} className="absolute inset-0 rounded-full"
-                  style={{border:"2px solid #f59e0b",animation:"ripple .6s ease-out forwards",opacity:0}}/>
-              </div>
-              {tapBpm!==null&&(
-                <>
-                  <div className="text-amber-400 font-bold">{tapBpm} <span className="text-xs text-amber-300">BPM</span></div>
-                  <button onClick={()=>setInput(String(tapBpm))} className="px-2 py-1 rounded-lg text-xs font-bold text-amber-200"
-                    style={{backgroundColor:"rgba(251,191,36,.15)",border:"1px solid rgba(251,191,36,.3)"}}>{t.ui.tapInsert}</button>
-                </>
-              )}
-              {taps.length>0&&(
-                <button onClick={clearTaps} className="px-2 py-1 rounded-lg text-xs font-bold text-red-300"
-                  style={{backgroundColor:"rgba(248,113,113,.12)",border:"1px solid rgba(248,113,113,.3)"}}>{t.ui.tapClear}</button>
-              )}
+            <div className="relative">
+              <button onClick={tap} className="w-14 h-14 rounded-full text-white font-bold text-xs shadow-lg relative z-10"
+                style={{background:"linear-gradient(135deg,#f59e0b,#d97706)",transform:ta?"scale(.88)":"scale(1)",transition:"transform .08s"}}>TAP</button>
+              <div key={rip} className="absolute inset-0 rounded-full"
+                style={{border:"2px solid #f59e0b",animation:"ripple .6s ease-out forwards",opacity:0}}/>
             </div>
+            {(tapBpm!==null||taps.length>0)&&(
+              <div className="flex items-center justify-center gap-2 flex-wrap min-h-[28px]">
+                {tapBpm!==null&&(
+                  <>
+                    <div className="text-amber-400 font-bold">{tapBpm} <span className="text-xs text-amber-300">BPM</span></div>
+                    <button onClick={()=>setInput(String(tapBpm))} className="px-2 py-1 rounded-lg text-xs font-bold text-amber-200"
+                      style={{backgroundColor:"rgba(251,191,36,.15)",border:"1px solid rgba(251,191,36,.3)"}}>{t.ui.tapInsert}</button>
+                  </>
+                )}
+                {taps.length>0&&(
+                  <button onClick={clearTaps} className="px-2 py-1 rounded-lg text-xs font-bold text-red-300"
+                    style={{backgroundColor:"rgba(248,113,113,.12)",border:"1px solid rgba(248,113,113,.3)"}}>{t.ui.tapClear}</button>
+                )}
+              </div>
+            )}
           </div>
         </>
       )}
