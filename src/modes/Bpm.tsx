@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { MODES_META, randInt } from "../constants";
 import { useT } from "../i18n";
 import { Btn, NextBtn, GWrap, useGameFB, useGameKeys } from "../components/common";
@@ -48,6 +48,18 @@ export default function BpmMode({audio,dispatch,streak,diff,onAdvance}:any){
       return arr;
     });
   };
+  // "0" (top row or numpad) taps the rhythm, same as the TAP button — lets you tap
+  // without taking a hand off the keyboard while the input has focus is intentionally
+  // excluded so typing "0" into the BPM field never fires a spurious tap.
+  const tapRef=useRef(tap);tapRef.current=tap;
+  useEffect(()=>{
+    const h=(e:KeyboardEvent)=>{
+      if(e.target instanceof HTMLInputElement||e.target instanceof HTMLTextAreaElement)return;
+      if(e.code==="Digit0"||e.code==="Numpad0"){e.preventDefault();tapRef.current();}
+    };
+    window.addEventListener("keydown",h);
+    return()=>window.removeEventListener("keydown",h);
+  },[]);
   useGameKeys(play,()=>{if(res)startNew();else submit();});
 
   return(
@@ -73,7 +85,7 @@ export default function BpmMode({audio,dispatch,streak,diff,onAdvance}:any){
             <div className="relative">
               <button onClick={tap} className="w-14 h-14 rounded-full text-white font-bold text-xs shadow-lg relative z-10"
                 style={{background:"linear-gradient(135deg,#f59e0b,#d97706)",transform:ta?"scale(.88)":"scale(1)",transition:"transform .08s"}}>TAP</button>
-              <div key={rip} className="absolute inset-0 rounded-full"
+              <div key={rip} className="absolute inset-0 rounded-full pointer-events-none"
                 style={{border:"2px solid #f59e0b",animation:"ripple .6s ease-out forwards",opacity:0}}/>
             </div>
             {(tapBpm!==null||taps.length>0)&&(

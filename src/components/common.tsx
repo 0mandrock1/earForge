@@ -195,7 +195,7 @@ export function NextBtn({onClick,color}:{onClick:()=>void,color:string}){
 // Digit keys 1-9 (top row OR numpad — .key normalizes both to the same character
 // as long as NumLock is on) pick the corresponding option. Works with an external
 // Bluetooth/USB-OTG numpad on a phone exactly the same as a desktop keyboard.
-export function OptGrid({opts,picked,ans,locked,onPick,cols=2}:any){
+export function OptGrid({opts,labels,picked,ans,locked,onPick,cols=2}:any){
   useEffect(()=>{
     const h=(e:KeyboardEvent)=>{
       if(locked)return;
@@ -213,7 +213,7 @@ export function OptGrid({opts,picked,ans,locked,onPick,cols=2}:any){
         else if(locked&&o===picked&&o!==ans){bg="#dc2626";anim="shake .4s ease";brd="2px solid #f87171";}
         return <button key={o} onClick={()=>onPick(o)} className="relative py-3 rounded-xl text-white font-bold text-base hover:bg-white hover:bg-opacity-20"
           style={{backgroundColor:bg,animation:anim,border:brd,transition:"background-color .2s"}}>
-          <span className="absolute top-1 left-2 text-[10px] opacity-40">{i+1}</span>{o}</button>;
+          <span className="absolute top-1 left-2 text-[10px] opacity-40">{i+1}</span>{labels?labels[i]:o}</button>;
       })}
     </div>
   );
