@@ -195,7 +195,9 @@ export function NextBtn({onClick,color}:{onClick:()=>void,color:string}){
 // Digit keys 1-9 (top row OR numpad — .key normalizes both to the same character
 // as long as NumLock is on) pick the corresponding option. Works with an external
 // Bluetooth/USB-OTG numpad on a phone exactly the same as a desktop keyboard.
-export function OptGrid({opts,picked,ans,locked,onPick,cols=2}:any){
+export function OptGrid({opts,picked,ans,locked,onPick,cols=2,hints}:any){
+  const [openHint,setOpenHint]=useState<string|null>(null);
+  useEffect(()=>{setOpenHint(null);},[opts]);
   useEffect(()=>{
     const h=(e:KeyboardEvent)=>{
       if(locked)return;
@@ -211,9 +213,26 @@ export function OptGrid({opts,picked,ans,locked,onPick,cols=2}:any){
         let bg="rgba(255,255,255,.1)",anim="",brd="2px solid transparent";
         if(locked&&o===ans){bg="#16a34a";anim="popIn .3s ease-out";brd="2px solid #4ade80";}
         else if(locked&&o===picked&&o!==ans){bg="#dc2626";anim="shake .4s ease";brd="2px solid #f87171";}
-        return <button key={o} onClick={()=>onPick(o)} className="relative py-3 rounded-xl text-white font-bold text-base hover:bg-white hover:bg-opacity-20"
-          style={{backgroundColor:bg,animation:anim,border:brd,transition:"background-color .2s"}}>
-          <span className="absolute top-1 left-2 text-[10px] opacity-40">{i+1}</span>{o}</button>;
+        const hint=hints?.[o];
+        return (
+          <div key={o} className="relative">
+            <button onClick={()=>{setOpenHint(null);onPick(o);}} className="relative w-full py-3 rounded-xl text-white font-bold text-base hover:bg-white hover:bg-opacity-20"
+              style={{backgroundColor:bg,animation:anim,border:brd,transition:"background-color .2s"}}>
+              <span className="absolute top-1 left-2 text-[10px] opacity-40">{i+1}</span>{o}
+            </button>
+            {hint&&(
+              <button type="button" aria-label="?" onClick={(e)=>{e.stopPropagation();setOpenHint(v=>v===o?null:o);}}
+                className="absolute top-1 right-1 w-5 h-5 rounded-full text-[11px] font-bold flex items-center justify-center"
+                style={{backgroundColor:"rgba(255,255,255,.18)",color:"rgba(255,255,255,.7)"}}>?</button>
+            )}
+            {hint&&openHint===o&&(
+              <div className="absolute left-1/2 -translate-x-1/2 top-full mt-1 z-10 text-[11px] px-2 py-1 rounded-lg text-white text-center whitespace-nowrap"
+                style={{backgroundColor:"rgba(15,10,40,.95)",border:"1px solid rgba(167,139,250,.3)",animation:"fadeIn .15s"}}>
+                {hint}
+              </div>
+            )}
+          </div>
+        );
       })}
     </div>
   );
