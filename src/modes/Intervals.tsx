@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from "react";
-import { INTERVALS, EASY_IV, ALL_DIRS, NOTES, MODES_META, IV_MNEMONIC, pickOpts, noteAt, randBuf } from "../constants";
+import { INTERVALS, EASY_IV, ALL_DIRS, NOTES, MODES_META, IV_MNEMONIC, IV_FULLNAME, pickOpts, noteAt, randBuf } from "../constants";
 import { useT, useLang } from "../i18n";
 import { weightedPick, recordResult, getWeakKeys } from "../srs";
 import { Btn, NextBtn, OptGrid, GWrap, useGameFB, useGameKeys } from "../components/common";
@@ -45,13 +45,15 @@ export default function IntervalsMode({audio,dispatch,streak,diff,onAdvance,weak
   const meta=MODES_META[1];
   const wrong=lk&&r.picked!==r.ans;
   const hint=(IV_MNEMONIC as any)[lang]?.[r.st];
+  const fullNames=(IV_FULLNAME as any)[lang]??IV_FULLNAME.en;
+  const optHints=Object.fromEntries(r.opts.map((o:string)=>[o,fullNames[ivPool.find(i=>i.name===o)?.st]]));
   return(
     <GWrap {...fb} streak={streak}>
       <span style={{fontSize:40}}>🎼</span>
       <h2 className="text-lg font-bold text-white">{t.questions.intervals}</h2>
       <div className="text-xs font-bold px-2 py-0.5 rounded-full" style={{backgroundColor:"rgba(8,145,178,.25)",color:"#67e8f9"}}>{dirLabel}</div>
       <Btn onClick={()=>playR(r)} label={t.ui.listen} color={meta.btn}/>
-      <OptGrid opts={r.opts} picked={r.picked} ans={r.ans} locked={lk} cols={nOpts>4?3:2}
+      <OptGrid opts={r.opts} picked={r.picked} ans={r.ans} locked={lk} cols={nOpts>4?3:2} hints={optHints}
         onPick={(v:string)=>{if(lk)return;setLk(true);setR(p=>({...p,picked:v}));const ok=v===r.ans;recordResult("intervals",r.ans,ok);ok?fb.onOk():fb.onBad();}}/>
       {wrong&&hint&&<div className="text-xs text-center px-6 max-w-xs" style={{color:"rgba(255,255,255,.55)",animation:"fadeIn .3s"}}>💡 {hint}</div>}
       {lk&&<div className="flex flex-col items-center gap-2">

@@ -114,6 +114,17 @@ export const IV_MNEMONIC={
       11:"'Take on Me' (A-ha): very wide, reaching up",12:"'Over the Rainbow': triumphant leap"},
 };
 
+// Full interval names keyed by semitone count (same identity scheme as IV_MNEMONIC above) —
+// shown behind a per-option "?" button so beginners can decode abbreviations like "м2"/"m2".
+export const IV_FULLNAME={
+  ua:{1:"мала секунда",2:"велика секунда",3:"мала терція",4:"велика терція",
+      5:"чиста кварта",6:"тритон",7:"чиста квінта",8:"мала секста",
+      9:"велика секста",10:"мала септима",11:"велика септима",12:"октава"},
+  en:{1:"minor second",2:"major second",3:"minor third",4:"major third",
+      5:"perfect fourth",6:"tritone",7:"perfect fifth",8:"minor sixth",
+      9:"major sixth",10:"minor seventh",11:"major seventh",12:"octave"},
+};
+
 // Chord quality mnemonics — index-aligned with the CHORDS arrays above (0=maj..5=dom7).
 export const CHORD_MNEMONIC={
   ua:["Стабільний, яскравий — основа мажору","Стабільний, темніший — основа мінору",
