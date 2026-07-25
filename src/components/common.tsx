@@ -195,7 +195,7 @@ export function NextBtn({onClick,color}:{onClick:()=>void,color:string}){
 // Digit keys 1-9 (top row OR numpad — .key normalizes both to the same character
 // as long as NumLock is on) pick the corresponding option. Works with an external
 // Bluetooth/USB-OTG numpad on a phone exactly the same as a desktop keyboard.
-export function OptGrid({opts,picked,ans,locked,onPick,cols=2,hints}:any){
+export function OptGrid({opts,labels,picked,ans,locked,onPick,cols=2,hints}:any){
   const [openHint,setOpenHint]=useState<string|null>(null);
   useEffect(()=>{setOpenHint(null);},[opts]);
   useEffect(()=>{
@@ -218,7 +218,7 @@ export function OptGrid({opts,picked,ans,locked,onPick,cols=2,hints}:any){
           <div key={o} className="relative">
             <button onClick={()=>{setOpenHint(null);onPick(o);}} className="relative w-full py-3 rounded-xl text-white font-bold text-base hover:bg-white hover:bg-opacity-20"
               style={{backgroundColor:bg,animation:anim,border:brd,transition:"background-color .2s"}}>
-              <span className="absolute top-1 left-2 text-[10px] opacity-40">{i+1}</span>{o}
+              <span className="absolute top-1 left-2 text-[10px] opacity-40">{i+1}</span>{labels?labels[i]:o}
             </button>
             {hint&&(
               <button type="button" aria-label="?" onClick={(e)=>{e.stopPropagation();setOpenHint(v=>v===o?null:o);}}

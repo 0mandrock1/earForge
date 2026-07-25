@@ -3,6 +3,7 @@ import { CSS, MODES_META, DIFFS_META, pick } from "../constants";
 import { useT } from "../i18n";
 import { getWeakKeys } from "../srs";
 import { aggregateTier } from "../adaptiveDiff";
+import { loadSkips, saveSkips } from "../storage";
 import NoteIdMode from "./NoteId";
 import IntervalsMode from "./Intervals";
 import BpmMode from "./Bpm";
@@ -68,6 +69,47 @@ function SessionSetup({onStart}:{onStart:(cfg:any)=>void}){
         style={{background:"linear-gradient(135deg,#7c3aed,#6d28d9)",opacity:modes.length===0?.4:1}}>
         {t.ui.startPlay}
       </button>
+    </div>
+  );
+}
+
+// Compact per-mode reference screen shown once (permanently dismissible) before the
+// session actually starts running. Dismissal is stored under the "session" pseudo-modeId
+// in the same earforge-tut-skip bucket used by per-mode TutorialDialog, so it's
+// independent of which modes happen to be selected in any given session.
+function SessionHelp({modes,onContinue}:{modes:string[],onContinue:()=>void}){
+  const t=useT();
+  const skipForever=useCallback(()=>{
+    loadSkips().then(s=>saveSkips({...(s as any),session:true}));
+    onContinue();
+  },[onContinue]);
+  return(
+    <div className="flex-1 flex flex-col items-center justify-center px-4 gap-4 pb-8" style={{animation:"fadeIn .3s"}}>
+      <style>{CSS}</style>
+      <span style={{fontSize:44}}>📖</span>
+      <h2 className="text-xl font-bold text-white text-center">{t.ui.sessionHelpTitle}</h2>
+      <div className="flex flex-col gap-2 w-full max-w-sm" style={{animation:"slideUp .3s ease-out"}}>
+        {MODES_META.filter(m=>modes.includes(m.id)).map(m=>(
+          <div key={m.id} className="rounded-xl p-3 flex flex-col gap-1.5"
+            style={{backgroundColor:"rgba(255,255,255,.06)",border:"1px solid rgba(167,139,250,.25)"}}>
+            <div className="flex items-center gap-2">
+              <span style={{fontSize:20}}>{m.icon}</span>
+              <span className="text-white font-bold text-sm">{(t.modes as any)[m.id].name}</span>
+            </div>
+            <ul className="flex flex-col gap-0.5">
+              {((t.sessionHelp.tips as any)[m.id]||[]).map((tip:string,i:number)=>(
+                <li key={i} className="text-purple-200 text-xs leading-relaxed">• {tip}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+      <button onClick={onContinue}
+        className="mt-1 px-8 py-3 rounded-2xl text-white font-bold text-lg shadow-lg hover:scale-105 active:scale-95 transition-transform"
+        style={{background:"linear-gradient(135deg,#7c3aed,#6d28d9)"}}>
+        {t.ui.startPlay}
+      </button>
+      <button onClick={skipForever} className="text-xs text-center" style={{color:"rgba(255,255,255,.35)"}}>{t.ui.dontShow}</button>
     </div>
   );
 }
@@ -144,8 +186,10 @@ function NoWeakSpots({onDone}:{onDone:()=>void}){
   );
 }
 
-// Top-level screen: setup -> running -> summary. Weak-spots mode (weak=true) skips
-// setup entirely and auto-configures from whatever currently has SRS miss-weight.
+// Top-level screen: setup -> help -> running -> summary. Weak-spots mode (weak=true)
+// skips setup entirely and auto-configures from whatever currently has SRS miss-weight,
+// but still gates on the "help" reference screen the same as a normal session (unless
+// already dismissed forever), so it stays consistent without becoming a nag once dismissed.
 export default function SessionFlow({audio,dispatch,streak,st,weak}:any){
   // Computed synchronously (not in an effect) so SessionRunner never mounts with an
   // empty modes array -- REGISTRY[undefined] would crash the render.
@@ -155,15 +199,30 @@ export default function SessionFlow({audio,dispatch,streak,st,weak}:any){
     const total=modes.reduce((a,m)=>a+getWeakKeys(m).length,0);
     return{modes,diff:"medium",rounds:Math.min(Math.max(total,1)*2,20),weakOnly:true};
   });
-  const [phase,setPhase]=useState<"setup"|"running"|"summary"|"empty">(()=>{
-    if(!weak)return "setup";
-    return config&&config.modes.length>0?"running":"empty";
-  });
+  // Weak-spots path needs an async localStorage check (skip status) before it knows
+  // whether to land on "help", "running" or "empty" -- start in "loading" (renders
+  // nothing, resolved on mount, effectively instant) rather than guessing.
+  const [phase,setPhase]=useState<"loading"|"setup"|"help"|"running"|"summary"|"empty">(weak?"loading":"setup");
   const [cfg,setCfg]=useState<any>(config);
   const [startSnap]=useState(()=>({stats:JSON.parse(JSON.stringify(st.stats)),xp:st.xp}));
 
+  useEffect(()=>{
+    if(!weak)return;
+    if(!config||config.modes.length===0){setPhase("empty");return;}
+    let m=true;
+    loadSkips().then(s=>{if(m)setPhase((s as any).session?"running":"help");});
+    return()=>{m=false;};
+  },[weak]);// eslint-disable-line
+
+  const startFromSetup=useCallback((c:any)=>{
+    setCfg(c);
+    loadSkips().then(s=>setPhase((s as any).session?"running":"help"));
+  },[]);
+
+  if(phase==="loading")return <div className="flex-1"/>;
   if(phase==="empty")return <NoWeakSpots onDone={()=>dispatch({type:"GO",screen:"menu"})}/>;
-  if(phase==="setup")return <SessionSetup onStart={(c)=>{setCfg(c);setPhase("running");}}/>;
+  if(phase==="setup")return <SessionSetup onStart={startFromSetup}/>;
+  if(phase==="help")return <SessionHelp modes={cfg.modes} onContinue={()=>setPhase("running")}/>;
   if(phase==="running")return <SessionRunner config={cfg} audio={audio} dispatch={dispatch} streak={streak} onFinish={()=>setPhase("summary")}/>;
   return <SessionSummary stats={st.stats} xp={st.xp} startStats={startSnap.stats} startXp={startSnap.xp} onDone={()=>dispatch({type:"GO",screen:"menu"})}/>;
 }

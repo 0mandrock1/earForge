@@ -5,14 +5,20 @@ export const NAT_NOTES=["C","D","E","F","G","A","B"];
 // Interval sets per language (same semitone counts, different abbreviations)
 export const INTERVALS={
   ua:[
-    {name:"м2",st:1},{name:"б2",st:2},{name:"м3",st:3},{name:"б3",st:4},
-    {name:"ч4",st:5},{name:"тт",st:6},{name:"ч5",st:7},{name:"м6",st:8},
-    {name:"б6",st:9},{name:"м7",st:10},{name:"б7",st:11},{name:"окт",st:12},
+    {name:"м2",st:1,full:"мала секунда"},{name:"б2",st:2,full:"велика секунда"},
+    {name:"м3",st:3,full:"мала терція"},{name:"б3",st:4,full:"велика терція"},
+    {name:"ч4",st:5,full:"чиста кварта"},{name:"тт",st:6,full:"тритон"},
+    {name:"ч5",st:7,full:"чиста квінта"},{name:"м6",st:8,full:"мала секста"},
+    {name:"б6",st:9,full:"велика секста"},{name:"м7",st:10,full:"мала септима"},
+    {name:"б7",st:11,full:"велика септима"},{name:"окт",st:12,full:"октава"},
   ],
   en:[
-    {name:"m2",st:1},{name:"M2",st:2},{name:"m3",st:3},{name:"M3",st:4},
-    {name:"P4",st:5},{name:"TT",st:6},{name:"P5",st:7},{name:"m6",st:8},
-    {name:"M6",st:9},{name:"m7",st:10},{name:"M7",st:11},{name:"oct",st:12},
+    {name:"m2",st:1,full:"Minor 2nd"},{name:"M2",st:2,full:"Major 2nd"},
+    {name:"m3",st:3,full:"Minor 3rd"},{name:"M3",st:4,full:"Major 3rd"},
+    {name:"P4",st:5,full:"Perfect 4th"},{name:"TT",st:6,full:"Tritone"},
+    {name:"P5",st:7,full:"Perfect 5th"},{name:"m6",st:8,full:"Minor 6th"},
+    {name:"M6",st:9,full:"Major 6th"},{name:"m7",st:10,full:"Minor 7th"},
+    {name:"M7",st:11,full:"Major 7th"},{name:"oct",st:12,full:"Octave"},
   ],
 };
 export const EASY_IV=[1,3,4,7,12];
@@ -112,17 +118,6 @@ export const IV_MNEMONIC={
       7:"'Star Wars' / 'Twinkle Twinkle': open, heroic",8:"'The Entertainer' (Joplin): gentle, wistful",
       9:"'My Way' (Sinatra): wide, soaring",10:"'Somewhere' (West Side Story): romantic, expansive",
       11:"'Take on Me' (A-ha): very wide, reaching up",12:"'Over the Rainbow': triumphant leap"},
-};
-
-// Full interval names keyed by semitone count (same identity scheme as IV_MNEMONIC above) —
-// shown behind a per-option "?" button so beginners can decode abbreviations like "м2"/"m2".
-export const IV_FULLNAME={
-  ua:{1:"мала секунда",2:"велика секунда",3:"мала терція",4:"велика терція",
-      5:"чиста кварта",6:"тритон",7:"чиста квінта",8:"мала секста",
-      9:"велика секста",10:"мала септима",11:"велика септима",12:"октава"},
-  en:{1:"minor second",2:"major second",3:"minor third",4:"major third",
-      5:"perfect fourth",6:"tritone",7:"perfect fifth",8:"minor sixth",
-      9:"major sixth",10:"minor seventh",11:"major seventh",12:"octave"},
 };
 
 // Chord quality mnemonics — index-aligned with the CHORDS arrays above (0=maj..5=dom7).
