@@ -22,6 +22,27 @@ export const INTERVALS={
   ],
 };
 export const EASY_IV=[1,3,4,7,12];
+
+// Scale types per language — index-aligned across languages (canonical order:
+// major, natural minor, harmonic minor, dorian, mixolydian). iv = semitone offsets
+// from the root for one ascending octave (includes the closing 12). Tier slices:
+// easy=[0,3) medium=[0,4) hard=[0,5).
+export const SCALES={
+  ua:[
+    {name:"мажор",iv:[0,2,4,5,7,9,11,12]},
+    {name:"нат. мінор",iv:[0,2,3,5,7,8,10,12]},
+    {name:"гарм. мінор",iv:[0,2,3,5,7,8,11,12]},
+    {name:"дорійський",iv:[0,2,3,5,7,9,10,12]},
+    {name:"міксолідійський",iv:[0,2,4,5,7,9,10,12]},
+  ],
+  en:[
+    {name:"major",iv:[0,2,4,5,7,9,11,12]},
+    {name:"natural minor",iv:[0,2,3,5,7,8,10,12]},
+    {name:"harmonic minor",iv:[0,2,3,5,7,8,11,12]},
+    {name:"dorian",iv:[0,2,3,5,7,9,10,12]},
+    {name:"mixolydian",iv:[0,2,4,5,7,9,10,12]},
+  ],
+};
 export type Dir="asc"|"desc"|"harm";
 export const ALL_DIRS:Dir[]=["asc","desc","harm"];
 export const MAJOR=[0,4,7],MINOR=[0,3,7];
@@ -40,13 +61,19 @@ export const CHORDS={
   ],
 };
 
-// Structural mode/diff data — text comes from translations
+// Structural mode/diff data — text comes from translations.
+// Per-mode accent colors are DELIBERATELY distinct (mode identity) and survive the
+// global purple->red retheme untouched, EXCEPT noteId which used to be the odd
+// violet one — moved to an orange->red ember that harmonizes with the forge theme.
+// scaleId (6th mode) gets its own indigo/blue accent, appended LAST so the [0..3]
+// index lookups other modes rely on don't shift.
 export const MODES_META=[
-  {id:"noteId", icon:"🎵",gr:"from-violet-500 to-purple-600",btn:"linear-gradient(135deg,#7c3aed,#6d28d9)"},
+  {id:"noteId", icon:"🎵",gr:"from-orange-500 to-red-600",  btn:"linear-gradient(135deg,#f97316,#ea580c)"},
   {id:"intervals",icon:"🎼",gr:"from-cyan-500 to-blue-600",  btn:"linear-gradient(135deg,#0891b2,#0e7490)"},
   {id:"bpm",     icon:"🥁", gr:"from-amber-500 to-orange-600",btn:"linear-gradient(135deg,#d97706,#b45309)"},
   {id:"key",     icon:"🎹", gr:"from-emerald-500 to-green-600",btn:"linear-gradient(135deg,#059669,#047857)"},
   {id:"chords",  icon:"🎸", gr:"from-rose-500 to-pink-600",   btn:"linear-gradient(135deg,#e11d48,#be123c)"},
+  {id:"scaleId", icon:"🪜", gr:"from-indigo-500 to-blue-600", btn:"linear-gradient(135deg,#4f46e5,#2563eb)"},
 ];
 export const DIFFS_META=[
   {id:"easy",  emoji:"🟢"},
@@ -64,7 +91,8 @@ export const CSS=`
 @keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-70px) scale(1.3)}}
 @keyframes lvlUp{0%{transform:scale(0) rotate(-10deg);opacity:0}50%{transform:scale(1.2) rotate(3deg);opacity:1}75%{transform:scale(.97)}100%{transform:scale(1) rotate(0);opacity:1}}
 @keyframes lvlUpExit{0%{transform:scale(1);opacity:1}100%{transform:scale(1.1);opacity:0}}
-@keyframes glow{0%,100%{box-shadow:0 0 8px rgba(167,139,250,.3)}50%{box-shadow:0 0 24px rgba(167,139,250,.7)}}
+@keyframes glow{0%,100%{box-shadow:0 0 10px rgba(239,68,68,.45)}50%{box-shadow:0 0 30px rgba(239,68,68,.9)}}
+@keyframes emberPulse{0%,100%{box-shadow:0 0 12px rgba(220,38,38,.5),0 0 4px rgba(249,115,22,.6) inset}50%{box-shadow:0 0 26px rgba(220,38,38,.85),0 0 8px rgba(249,115,22,.5) inset}}
 @keyframes slideUp{0%{transform:translateY(30px);opacity:0}100%{transform:translateY(0);opacity:1}}
 @keyframes fadeIn{0%{opacity:0}100%{opacity:1}}
 @keyframes fadeOut{0%{opacity:1}100%{opacity:0}}

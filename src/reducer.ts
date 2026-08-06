@@ -3,7 +3,7 @@ import { setActiveUser } from "./storage";
 
 // ─── Reducer ───────────────────────────────────────────────────────────────────
 export const initState={screen:"login",nickname:"",xp:0,level:1,streak:0,bestStreak:0,
-  stats:{noteId:{ok:0,total:0},intervals:{ok:0,total:0},bpm:{ok:0,total:0},key:{ok:0,total:0},chords:{ok:0,total:0}},
+  stats:{noteId:{ok:0,total:0},intervals:{ok:0,total:0},bpm:{ok:0,total:0},key:{ok:0,total:0},chords:{ok:0,total:0},scaleId:{ok:0,total:0}},
   loaded:false,lvlUp:false,sessionWeak:false};
 
 export function reducer(st:typeof initState,a:any){

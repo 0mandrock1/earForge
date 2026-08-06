@@ -9,11 +9,12 @@ export const T={
       bpm:{name:"BPM Tap",desc:"Злови темп"},
       key:{name:"Key Detect",desc:"Знайди тональність"},
       chords:{name:"Chords",desc:"Визнач якість акорду"},
+      scaleId:{name:"Scale ID",desc:"Визнач тип гами"},
     },
     diffs:{
-      easy:{  label:"Легко",  noteId:"7 нот, 3 варіанти",   intervals:"5 інтервалів, 3 варіанти", bpm:"60–120, допуск ±12%",key:"Лише мажор, 3 варіанти",chords:"3 якості (мажор/мінор/зменш.)"},
-      medium:{label:"Середньо",noteId:"12 нот, 4 варіанти",  intervals:"12 інтервалів, 4 варіанти",bpm:"60–180, допуск ±8%", key:"Мажор + мінор, 4 варіанти",chords:"4 якості (+ збільш.)"},
-      hard:{  label:"Складно",noteId:"12 нот, 2 октави, 6 варіантів",intervals:"12 інтервалів, 6 варіантів",bpm:"40–200, допуск ±5%",key:"Мажор + мінор, 6 варіантів",chords:"6 якостей (+ мажор7/домін7)"},
+      easy:{  label:"Легко",  noteId:"7 нот, 3 варіанти",   intervals:"5 інтервалів, 3 варіанти", bpm:"60–120, допуск ±12%",key:"Лише мажор, 3 варіанти",chords:"3 якості (мажор/мінор/зменш.)",scaleId:"3 гами (мажор/мінор/гарм.)"},
+      medium:{label:"Середньо",noteId:"12 нот, 4 варіанти",  intervals:"12 інтервалів, 4 варіанти",bpm:"60–180, допуск ±8%", key:"Мажор + мінор, 4 варіанти",chords:"4 якості (+ збільш.)",scaleId:"4 гами (+ дорійський)"},
+      hard:{  label:"Складно",noteId:"12 нот, 2 октави, 6 варіантів",intervals:"12 інтервалів, 6 варіантів",bpm:"40–200, допуск ±5%",key:"Мажор + мінор, 6 варіантів",chords:"6 якостей (+ мажор7/домін7)",scaleId:"5 гам (+ міксолідійський)"},
     },
     ui:{
       chooseMode:"Обери режим",chooseDiff:"Обери складність",autoDiff:"адаптивно",
@@ -37,8 +38,9 @@ export const T={
       noWeakSpots:"Немає слабких місць — усе чисто! 🎉",compare:"🔊 Порівняти",rounds:"Раундів",
       ivRefToggle:"📖 Довідка з інтервалів",ivRefShort:"Скор.",ivRefFullCol:"Повна назва",ivRefSemi:"Півтони",
       sessionHelpTitle:"📖 Швидка довідка перед сесією",
+      helpName:"Назва",helpFormula:"Склад (півтони)",
     },
-    questions:{noteId:"Яка це нота?",intervals:"Який інтервал?",bpm:"Який темп?",key:"Яка тональність?",chords:"Яка якість акорду?"},
+    questions:{noteId:"Яка це нота?",intervals:"Який інтервал?",bpm:"Який темп?",key:"Яка тональність?",chords:"Яка якість акорду?",scaleId:"Яка це гама?"},
     streakMsgs:["","","Непогано!","Вогонь!","Майстер!","На хвилі!","Неймовірно!","Легенда!","GODLIKE!","UNSTOPPABLE!"],
     sessionHelp:{
       tips:{
@@ -47,7 +49,44 @@ export const T={
         bpm:["Тупай або кивай в ритм — тіло відчуває темп краще голови.","Обережно з подвоєнням/половиненням: результат ×2 або ÷2 — інша сітка."],
         key:["Останній акорд — це «дім». Яка нота відчувається домом — та й тональність.","Мажор звучить світло, мінор — темніше."],
         chords:["Мажор і мінор — стабільна база; зменшений і збільшений — нестабільні.","7-ми (мажор7/домін7) додають кольору й напруги зверху тризвучка."],
+        scaleId:["Слухай загальний настрій гами: світлий мажор чи темний мінор.","Гармонічний мінор упізнати за екзотичним стрибком наприкінці."],
       },
+    },
+    help:{
+      noteId:{title:"🎵 Впізнавання нот",tips:[
+        "Опорна нота — A4 (440 Гц). Тисни A4 у грі й тримай її звук у голові як лінійку.",
+        "Рахуй півтони від A4: почута нота вище чи нижче й приблизно на скільки.",
+        "Наспівуй почуту ноту — голос ловить висоту точніше за здогадку.",
+        "Одна назва в різних октавах (C4 і C5) звучить «схоже» — слухай саме висоту.",
+      ]},
+      intervals:{title:"🎼 Інтервали",tips:[
+        "Кожен інтервал має «характер» і пісню-приклад — згадай її (таблиця нижче).",
+        "Наспівуй інтервал від опорної ноти, якщо сумніваєшся.",
+        "ч4 і тритон різняться лише на пів тону — вчувайся у стабільність проти напруги.",
+      ]},
+      bpm:{title:"🥁 Темп (BPM)",tips:[
+        "Тупай або кивай у ритм — тіло відчуває темп краще за голову.",
+        "TAP-кнопка (або клавіша 0) рахує твій темп; «Вставити» підставляє його у поле.",
+        "Похибка — наскільки твій BPM відхилився від цілі. Допуск залежить від складності (±12/8/5%).",
+        "Стережись подвоєння/половинення: ×2 або ÷2 — це вже інша ритм-сітка.",
+      ]},
+      key:{title:"🎹 Тональність",tips:[
+        "Останній акорд — «дім». Яка нота відчувається домом — та й тональність.",
+        "Мажор звучить світло, мінор — темніше.",
+        "Прогресія I–IV–V–I: IV іде, V напружує, I вирішує. Фокус на вирішенні.",
+        "Усього 24 тональності: 12 мажорних + 12 мінорних (від кожної з 12 нот).",
+      ]},
+      chords:{title:"🎸 Акорди",tips:[
+        "Мажор і мінор — стабільна база; зменшений і збільшений — нестабільні.",
+        "7-ми (мажор7, домін7) додають четверту ноту зверху: більше кольору й напруги.",
+        "Числа у таблиці — півтони від басу акорду (0 = бас).",
+      ]},
+      scaleId:{title:"🪜 Гами",tips:[
+        "Гама грає по нотах угору. Слухай загальний настрій: мажор світлий, мінор темний.",
+        "Гармонічний мінор має екзотичний стрибок наприкінці (підвищений 7-й щабель).",
+        "Дорійський — мінор із «яскравішим» 6-м щаблем; міксолідійський — мажор із «м'яким» 7-м.",
+        "Числа у таблиці — півтони від тоніки (0 = тоніка).",
+      ]},
     },
     tutorials:{
       noteId:{title:"🎵 Як вгадувати ноти",steps:[
@@ -90,6 +129,13 @@ export const T={
         {icon:"🎧",text:"Мажор7 звучить м'яко і «джазово», домінант7 — гостріше, тягне до вирішення. Якщо плутаєш їх — порівняй по черзі."},
         {icon:"🔍",text:"Спробуй почути окремо нижню (басову) і верхню ноти акорду. Тризвучок + «фарба» зверху — так простіше розкласти акорд на частини."},
       ]},
+      scaleId:{title:"🪜 Як визначати гами",steps:[
+        {icon:"🪜",text:"Гама — це послідовність нот угору від тоніки. Тут вона програється по одній ноті — слухай загальну «форму» звучання."},
+        {icon:"😊",text:"Спершу відрізняй мажор від мінору: мажор світлий і «сонячний», мінор темніший.",hasMajMin:true},
+        {icon:"🎼",text:"Гармонічний мінор — як натуральний, але з підвищеним 7-м щаблем: наприкінці чути характерний екзотичний стрибок."},
+        {icon:"🎨",text:"Лади: дорійський — мінор з яскравішим 6-м щаблем; міксолідійський — мажор з «м'яким» (низьким) 7-м."},
+        {icon:"💡",text:"Наспівуй гаму вгору — так легше відчути, де щаблі «звичні», а де є характерний стрибок чи забарвлення."},
+      ]},
     },
   },
   en:{
@@ -99,11 +145,12 @@ export const T={
       bpm:{name:"BPM Tap",desc:"Catch the tempo"},
       key:{name:"Key Detect",desc:"Find the key"},
       chords:{name:"Chords",desc:"Identify chord quality"},
+      scaleId:{name:"Scale ID",desc:"Identify the scale"},
     },
     diffs:{
-      easy:{  label:"Easy",  noteId:"7 notes, 3 options",   intervals:"5 intervals, 3 options", bpm:"60–120, tolerance ±12%",key:"Major only, 3 options",chords:"3 qualities (maj/min/dim)"},
-      medium:{label:"Medium",noteId:"12 notes, 4 options",  intervals:"12 intervals, 4 options",bpm:"60–180, tolerance ±8%", key:"Major + minor, 4 options",chords:"4 qualities (+ aug)"},
-      hard:{  label:"Hard",  noteId:"12 notes, 2 octaves, 6 options",intervals:"12 intervals, 6 options",bpm:"40–200, tolerance ±5%",key:"Major + minor, 6 options",chords:"6 qualities (+ maj7/dom7)"},
+      easy:{  label:"Easy",  noteId:"7 notes, 3 options",   intervals:"5 intervals, 3 options", bpm:"60–120, tolerance ±12%",key:"Major only, 3 options",chords:"3 qualities (maj/min/dim)",scaleId:"3 scales (maj/min/harm)"},
+      medium:{label:"Medium",noteId:"12 notes, 4 options",  intervals:"12 intervals, 4 options",bpm:"60–180, tolerance ±8%", key:"Major + minor, 4 options",chords:"4 qualities (+ aug)",scaleId:"4 scales (+ dorian)"},
+      hard:{  label:"Hard",  noteId:"12 notes, 2 octaves, 6 options",intervals:"12 intervals, 6 options",bpm:"40–200, tolerance ±5%",key:"Major + minor, 6 options",chords:"6 qualities (+ maj7/dom7)",scaleId:"5 scales (+ mixolydian)"},
     },
     ui:{
       chooseMode:"Choose mode",chooseDiff:"Choose difficulty",autoDiff:"adaptive",
@@ -127,8 +174,9 @@ export const T={
       noWeakSpots:"No weak spots — all clean! 🎉",compare:"🔊 Compare",rounds:"Rounds",
       ivRefToggle:"📖 Interval reference",ivRefShort:"Abbr.",ivRefFullCol:"Full name",ivRefSemi:"Semitones",
       sessionHelpTitle:"📖 Quick reference before you start",
+      helpName:"Name",helpFormula:"Composition (semitones)",
     },
-    questions:{noteId:"What note is this?",intervals:"What interval?",bpm:"What's the tempo?",key:"What key is this?",chords:"What chord quality?"},
+    questions:{noteId:"What note is this?",intervals:"What interval?",bpm:"What's the tempo?",key:"What key is this?",chords:"What chord quality?",scaleId:"What scale is this?"},
     streakMsgs:["","","Not bad!","On fire!","Master!","In the zone!","Incredible!","Legend!","GODLIKE!","UNSTOPPABLE!"],
     sessionHelp:{
       tips:{
@@ -137,7 +185,44 @@ export const T={
         bpm:["Tap your foot or nod along — your body reads tempo better than your mind.","Watch for doubling/halving: a ×2 or ÷2 result means you're in a different grid."],
         key:["The last chord is 'home'. Whichever note feels like home is the key.","Major sounds bright, minor sounds darker."],
         chords:["Major and minor are the stable base; diminished and augmented are unstable.","7ths (maj7/dom7) add color and tension on top of a plain triad."],
+        scaleId:["Listen to the scale's overall mood: bright major or dark minor.","Harmonic minor stands out by its exotic leap near the top."],
       },
+    },
+    help:{
+      noteId:{title:"🎵 Identifying notes",tips:[
+        "Anchor on A4 (440 Hz). Hit A4 in-game and keep its pitch in your head as a ruler.",
+        "Count semitones from A4: is the note above or below, and roughly by how much.",
+        "Sing the note you heard — your voice pins down pitch better than a guess.",
+        "The same name in different octaves (C4 vs C5) sounds 'similar' — listen to pitch height.",
+      ]},
+      intervals:{title:"🎼 Intervals",tips:[
+        "Every interval has a 'character' and a reference song — recall it (table below).",
+        "Sing the interval from your anchor note when you're unsure.",
+        "P4 and the tritone differ by just a half step — feel stability vs tension.",
+      ]},
+      bpm:{title:"🥁 Tempo (BPM)",tips:[
+        "Tap your foot or nod along — your body reads tempo better than your mind.",
+        "The TAP button (or the 0 key) counts your tempo; 'Use' drops it into the field.",
+        "The error is how far your BPM was from the target. Tolerance scales with difficulty (±12/8/5%).",
+        "Watch for doubling/halving: a ×2 or ÷2 result means you're on a different grid.",
+      ]},
+      key:{title:"🎹 Key",tips:[
+        "The last chord is 'home'. Whichever note feels like home is the key.",
+        "Major sounds bright, minor sounds darker.",
+        "The I–IV–V–I progression: IV departs, V tenses, I resolves. Focus on the resolution.",
+        "There are 24 keys in all: 12 major + 12 minor (one of each from all 12 notes).",
+      ]},
+      chords:{title:"🎸 Chords",tips:[
+        "Major and minor are the stable base; diminished and augmented are unstable.",
+        "7ths (maj7, dom7) add a fourth note on top: more color and tension.",
+        "The numbers in the table are semitones above the chord's bass (0 = bass).",
+      ]},
+      scaleId:{title:"🪜 Scales",tips:[
+        "The scale plays note-by-note upward. Listen to the overall mood: major bright, minor dark.",
+        "Harmonic minor has an exotic leap near the top (raised 7th degree).",
+        "Dorian is a minor with a 'brighter' 6th; mixolydian a major with a 'soft' (lowered) 7th.",
+        "The numbers in the table are semitones above the tonic (0 = tonic).",
+      ]},
     },
     tutorials:{
       noteId:{title:"🎵 How to identify notes",steps:[
@@ -179,6 +264,13 @@ export const T={
         {icon:"🎶",text:"7ths (maj7, dom7) add a fourth note on top — more color and tension than a plain triad."},
         {icon:"🎧",text:"Maj7 sounds soft and 'jazzy'; dom7 sounds sharper and wants to resolve. Compare them directly if you keep mixing them up."},
         {icon:"🔍",text:"Try to hear the bass note and the top note separately. Triad + top 'color' note — breaking a chord into parts makes it easier to identify."},
+      ]},
+      scaleId:{title:"🪜 How to identify scales",steps:[
+        {icon:"🪜",text:"A scale is a run of notes upward from the tonic. Here it plays one note at a time — listen to the overall 'shape' of the sound."},
+        {icon:"😊",text:"First tell major from minor: major is bright and 'sunny', minor is darker.",hasMajMin:true},
+        {icon:"🎼",text:"Harmonic minor is like natural minor but with a raised 7th degree: you hear a distinctive exotic leap near the top."},
+        {icon:"🎨",text:"Modes: dorian is a minor with a brighter 6th degree; mixolydian is a major with a 'soft' (lowered) 7th."},
+        {icon:"💡",text:"Sing the scale upward — it's easier to feel where the steps are 'ordinary' and where a characteristic leap or color sits."},
       ]},
     },
   },

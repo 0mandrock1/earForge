@@ -13,7 +13,7 @@ export default function Menu({dispatch,stats,bestStreak,nickname}:any){
     <div className="flex-1 flex flex-col items-center justify-center px-4 gap-4 pb-8" style={{animation:"fadeIn .4s"}}>
       <style>{CSS}</style>
       {showLB&&<LeaderboardModal onClose={()=>setShowLB(false)} currentNick={nickname}/>}
-      {nickname&&<div className="text-purple-300 text-sm font-bold">👤 {nickname}</div>}
+      {nickname&&<div className="text-red-300 text-sm font-bold">👤 {nickname}</div>}
       <h2 className="text-2xl font-bold text-white mb-1">{t.ui.chooseMode}</h2>
       <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
         {MODES_META.map((m,idx)=>{
@@ -41,15 +41,15 @@ export default function Menu({dispatch,stats,bestStreak,nickname}:any){
       </div>
       {total>0&&(
         <div className="mt-2 text-center" style={{animation:"fadeIn .5s"}}>
-          <div className="text-purple-300 text-sm">{t.ui.total}: {ok}/{total} ({pct}%)</div>
-          <div className="text-purple-400 text-xs mt-1">{t.ui.bestStreak}: {bestStreak}</div>
+          <div className="text-red-300 text-sm">{t.ui.total}: {ok}/{total} ({pct}%)</div>
+          <div className="text-red-400 text-xs mt-1">{t.ui.bestStreak}: {bestStreak}</div>
         </div>
       )}
       <div className="flex flex-col gap-2 w-full max-w-sm mt-1">
         <div className="flex gap-2">
           <button onClick={()=>dispatch({type:"GO",screen:"session"})}
             className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white hover:scale-105 active:scale-95 transition-transform"
-            style={{background:"linear-gradient(135deg,#7c3aed,#6d28d9)"}}>
+            style={{background:"linear-gradient(135deg,#dc2626,#991b1b)"}}>
             {t.ui.sessionBtn}
           </button>
           <button onClick={()=>dispatch({type:"GO",screen:"session",weak:true})}
@@ -60,20 +60,20 @@ export default function Menu({dispatch,stats,bestStreak,nickname}:any){
         </div>
         <div className="flex gap-2">
           <button onClick={()=>setShowLB(true)}
-            className="flex-1 px-4 py-2 rounded-xl text-sm font-bold text-purple-200 hover:scale-105 active:scale-95 transition-transform"
-            style={{backgroundColor:"rgba(167,139,250,.15)",border:"1px solid rgba(167,139,250,.3)"}}>
+            className="flex-1 px-4 py-2 rounded-xl text-sm font-bold text-red-200 hover:scale-105 active:scale-95 transition-transform"
+            style={{backgroundColor:"rgba(239,68,68,.15)",border:"1px solid rgba(239,68,68,.4)"}}>
             🏆 {t.ui.leaderboard}
           </button>
           <a href="guide/" target="_blank" rel="noopener noreferrer"
-            className="flex-1 px-4 py-2 rounded-xl text-sm font-bold text-purple-200 hover:scale-105 active:scale-95 transition-transform text-center"
-            style={{backgroundColor:"rgba(167,139,250,.15)",border:"1px solid rgba(167,139,250,.3)"}}>
+            className="flex-1 px-4 py-2 rounded-xl text-sm font-bold text-red-200 hover:scale-105 active:scale-95 transition-transform text-center"
+            style={{backgroundColor:"rgba(239,68,68,.15)",border:"1px solid rgba(239,68,68,.4)"}}>
             {t.ui.guideBtn}
           </a>
         </div>
         <div className="flex gap-2">
           <a href="hacks/" target="_blank" rel="noopener noreferrer"
-            className="flex-1 px-4 py-2 rounded-xl text-sm font-bold text-purple-200 hover:scale-105 active:scale-95 transition-transform text-center"
-            style={{backgroundColor:"rgba(167,139,250,.15)",border:"1px solid rgba(167,139,250,.3)"}}>
+            className="flex-1 px-4 py-2 rounded-xl text-sm font-bold text-red-200 hover:scale-105 active:scale-95 transition-transform text-center"
+            style={{backgroundColor:"rgba(239,68,68,.15)",border:"1px solid rgba(239,68,68,.4)"}}>
             {t.ui.hacksBtn}
           </a>
           <button onClick={()=>dispatch({type:"LOGOUT"})}

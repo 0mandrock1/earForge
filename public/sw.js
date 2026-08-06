@@ -1,7 +1,7 @@
 // Network-first for the app shell (index.html/JS/CSS) so fixes always reach
 // clients on next load, with cache as an offline fallback only. Audio is
 // synthesized (Web Audio), so caching JS/CSS/HTML is enough for offline play.
-const CACHE = "earforge-v3";
+const CACHE = "earforge-v4";
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (e) => {
   e.waitUntil(

@@ -7,8 +7,9 @@ import IntervalsMode from "./Intervals";
 import BpmMode from "./Bpm";
 import KeyMode from "./Key";
 import ChordsMode from "./Chords";
+import ScaleIdMode from "./ScaleId";
 
-const REGISTRY:any={noteId:NoteIdMode,intervals:IntervalsMode,bpm:BpmMode,key:KeyMode,chords:ChordsMode};
+const REGISTRY:any={noteId:NoteIdMode,intervals:IntervalsMode,bpm:BpmMode,key:KeyMode,chords:ChordsMode,scaleId:ScaleIdMode};
 
 // No manual difficulty screen here anymore — difficulty is picked automatically
 // per mode by adaptiveDiff (rolling accuracy, see adaptiveDiff.ts) and read fresh
@@ -25,7 +26,7 @@ export default function ModeScreen({modeId,audio,dispatch,streak}:any){
   return(
     <>
       <div className="w-full flex justify-center pt-1">
-        <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{backgroundColor:"rgba(255,255,255,.08)",color:"#c4b5fd"}}>
+        <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{backgroundColor:"rgba(255,255,255,.08)",color:"#fca5a5"}}>
           {dMeta.emoji} {(t.diffs as any)[diff].label} · {t.ui.autoDiff}
         </span>
       </div>

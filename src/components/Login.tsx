@@ -23,7 +23,7 @@ export default function LoginScreen({dispatch}:{dispatch:React.Dispatch<any>}){
       dispatch({type:"SET_USER",nickname:n,data});
     } else {
       const old=await loadP();
-      const defaults={xp:0,level:1,streak:0,bestStreak:0,stats:{noteId:{ok:0,total:0},intervals:{ok:0,total:0},bpm:{ok:0,total:0},key:{ok:0,total:0},chords:{ok:0,total:0}}};
+      const defaults={xp:0,level:1,streak:0,bestStreak:0,stats:{noteId:{ok:0,total:0},intervals:{ok:0,total:0},bpm:{ok:0,total:0},key:{ok:0,total:0},chords:{ok:0,total:0},scaleId:{ok:0,total:0}}};
       const newProf:ProfileData={password:pass,...defaults,...(old||{})};
       profiles[n]=newProf;
       await saveProfiles(profiles);
@@ -42,7 +42,7 @@ export default function LoginScreen({dispatch}:{dispatch:React.Dispatch<any>}){
         <input value={nick} onChange={e=>{setNick(e.target.value);setErr("");}}
           placeholder={t.ui.enterNickname} autoCapitalize="none" autoCorrect="off"
           className="w-full py-3 px-4 rounded-xl text-white font-bold text-center outline-none"
-          style={{backgroundColor:"rgba(255,255,255,.1)",border:"2px solid rgba(167,139,250,.3)",fontSize:16}}
+          style={{backgroundColor:"rgba(255,255,255,.1)",border:"2px solid rgba(239,68,68,.4)",fontSize:16}}
           onKeyDown={e=>{if(e.key==="Enter")onLogin();}}
         />
         <input type="password" value={pass} onChange={e=>{setPass(e.target.value);setErr("");}}
@@ -55,7 +55,7 @@ export default function LoginScreen({dispatch}:{dispatch:React.Dispatch<any>}){
         {err&&<div className="text-red-400 text-sm text-center" style={{animation:"slideUp .3s ease-out"}}>{err}</div>}
         <button onClick={onLogin}
           className="w-full py-3 rounded-xl text-white font-bold text-base hover:scale-105 active:scale-95 transition-transform"
-          style={{background:"linear-gradient(135deg,#7c3aed,#6d28d9)"}}>
+          style={{background:"linear-gradient(135deg,#dc2626,#991b1b)"}}>
           {t.ui.loginBtn}
         </button>
       </div>

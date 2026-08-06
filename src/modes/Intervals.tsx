@@ -13,7 +13,6 @@ export default function IntervalsMode({audio,dispatch,streak,diff,onAdvance,weak
   const fullByName=Object.fromEntries(allIntervals.map(i=>[i.name,i.full]));
   const nOpts=diff==="easy"?3:diff==="medium"?4:6;
   const lastAnsRef=useRef<string|null>(null);
-  const [showRef,setShowRef]=useState(false);
   const newR=()=>{
     const weak=weakOnly?getWeakKeys("intervals"):null;
     const base=weak?ivPool.filter(i=>weak.includes(i.name)):ivPool;
@@ -56,24 +55,6 @@ export default function IntervalsMode({audio,dispatch,streak,diff,onAdvance,weak
       <OptGrid opts={r.opts} labels={r.opts.map((o:string)=>fullByName[o]??o)} picked={r.picked} ans={r.ans} locked={lk} cols={nOpts>4?3:2}
         onPick={(v:string)=>{if(lk)return;setLk(true);setR(p=>({...p,picked:v}));const ok=v===r.ans;recordResult("intervals",r.ans,ok);ok?fb.onOk():fb.onBad();}}/>
       {wrong&&hint&&<div className="text-xs text-center px-6 max-w-xs" style={{color:"rgba(255,255,255,.55)",animation:"fadeIn .3s"}}>💡 {hint}</div>}
-      <button onClick={()=>setShowRef(v=>!v)} className="text-xs font-bold px-3 py-1.5 rounded-lg"
-        style={{backgroundColor:"rgba(167,139,250,.15)",border:"1px solid rgba(167,139,250,.3)",color:"#c4b5fd"}}>
-        {t.ui.ivRefToggle} {showRef?"▲":"▼"}
-      </button>
-      {showRef&&(
-        <div className="w-full max-w-xs rounded-xl p-3 flex flex-col gap-1.5" style={{backgroundColor:"rgba(255,255,255,.06)",animation:"slideUp .25s ease-out"}}>
-          <div className="grid grid-cols-[1fr_2fr_auto] gap-2 text-[10px] font-bold uppercase tracking-wide" style={{color:"rgba(255,255,255,.4)"}}>
-            <span>{t.ui.ivRefShort}</span><span>{t.ui.ivRefFullCol}</span><span>{t.ui.ivRefSemi}</span>
-          </div>
-          {ivPool.map(iv=>(
-            <div key={iv.name} className="grid grid-cols-[1fr_2fr_auto] gap-2 text-xs" style={{color:"rgba(255,255,255,.85)"}}>
-              <span className="font-bold" style={{color:"#67e8f9"}}>{iv.name}</span>
-              <span>{iv.full}</span>
-              <span style={{color:"rgba(255,255,255,.5)"}}>{iv.st}</span>
-            </div>
-          ))}
-        </div>
-      )}
       {lk&&<div className="flex flex-col items-center gap-2">
         <button onClick={()=>playR(r)} className="px-4 py-1.5 rounded-xl text-white text-sm font-bold"
           style={{backgroundColor:"rgba(255,255,255,.12)",border:"1px solid rgba(255,255,255,.2)"}}>🔊 {t.ui.listen}</button>

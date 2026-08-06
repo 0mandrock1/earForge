@@ -63,7 +63,7 @@ export default function App(){
 
   return(
     <LangCtx.Provider value={{lang,setLang}}>
-      <div className="app-root flex flex-col" style={{background:"linear-gradient(135deg,#1e1b4b 0%,#0f0a2e 50%,#1a0a2e 100%)"}}>
+      <div className="app-root flex flex-col" style={{background:"linear-gradient(135deg,#2b0b0b 0%,#160404 50%,#280a0a 100%)"}}>
         {!isLogin&&<Header state={st} dispatch={dispatch}/>}
         {content}
         {st.lvlUp&&<LevelUp level={st.level} onDone={()=>dispatch({type:"CLR_LVL"})}/>}

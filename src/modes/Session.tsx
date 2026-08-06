@@ -9,11 +9,12 @@ import IntervalsMode from "./Intervals";
 import BpmMode from "./Bpm";
 import KeyMode from "./Key";
 import ChordsMode from "./Chords";
+import ScaleIdMode from "./ScaleId";
 
-const REGISTRY:any={noteId:NoteIdMode,intervals:IntervalsMode,bpm:BpmMode,key:KeyMode,chords:ChordsMode};
+const REGISTRY:any={noteId:NoteIdMode,intervals:IntervalsMode,bpm:BpmMode,key:KeyMode,chords:ChordsMode,scaleId:ScaleIdMode};
 // BPM has no SRS weight (continuous target, see modes/Bpm.tsx), so it never has weak
 // items and is left out of the weak-spots mode list automatically below.
-const SRS_MODES=["noteId","intervals","key","chords"];
+const SRS_MODES=["noteId","intervals","key","chords","scaleId"];
 const LS_KEY="earforge-last-session";
 
 function loadLastSession(){try{return JSON.parse(localStorage.getItem(LS_KEY)||"null")}catch{return null}}
@@ -34,8 +35,8 @@ function SessionSetup({onStart}:{onStart:(cfg:any)=>void}){
         {MODES_META.map(m=>(
           <button key={m.id} onClick={()=>toggle(m.id)}
             className="px-3 py-1.5 rounded-full text-sm font-bold flex items-center gap-1 transition-opacity"
-            style={{backgroundColor:modes.includes(m.id)?"rgba(167,139,250,.3)":"rgba(255,255,255,.06)",
-              border:modes.includes(m.id)?"1px solid rgba(167,139,250,.6)":"1px solid rgba(255,255,255,.15)",
+            style={{backgroundColor:modes.includes(m.id)?"rgba(239,68,68,.4)":"rgba(255,255,255,.06)",
+              border:modes.includes(m.id)?"1px solid rgba(239,68,68,.7)":"1px solid rgba(255,255,255,.15)",
               opacity:modes.includes(m.id)?1:.5,color:"white"}}>
             {m.icon} {(t.modes as any)[m.id].name}
           </button>
@@ -45,20 +46,20 @@ function SessionSetup({onStart}:{onStart:(cfg:any)=>void}){
         {DIFFS_META.map(d=>(
           <button key={d.id} onClick={()=>setDiff(d.id)}
             className="px-3 py-2 rounded-xl text-sm font-bold"
-            style={{backgroundColor:diff===d.id?"rgba(167,139,250,.3)":"rgba(255,255,255,.06)",
-              border:diff===d.id?"1px solid rgba(167,139,250,.6)":"1px solid transparent",color:"white"}}>
+            style={{backgroundColor:diff===d.id?"rgba(239,68,68,.4)":"rgba(255,255,255,.06)",
+              border:diff===d.id?"1px solid rgba(239,68,68,.7)":"1px solid transparent",color:"white"}}>
             {d.emoji} {(t.diffs as any)[d.id].label}
           </button>
         ))}
       </div>
       <div className="flex flex-col items-center gap-1.5">
-        <span className="text-purple-300 text-xs">{t.ui.rounds}</span>
+        <span className="text-red-300 text-xs">{t.ui.rounds}</span>
         <div className="flex gap-2">
           {[10,15,20,30].map(n=>(
             <button key={n} onClick={()=>setRounds(n)}
               className="w-12 h-12 rounded-xl text-sm font-bold"
-              style={{backgroundColor:rounds===n?"rgba(167,139,250,.3)":"rgba(255,255,255,.06)",
-                border:rounds===n?"1px solid rgba(167,139,250,.6)":"1px solid transparent",color:"white"}}>
+              style={{backgroundColor:rounds===n?"rgba(239,68,68,.4)":"rgba(255,255,255,.06)",
+                border:rounds===n?"1px solid rgba(239,68,68,.7)":"1px solid transparent",color:"white"}}>
               {n}
             </button>
           ))}
@@ -66,7 +67,7 @@ function SessionSetup({onStart}:{onStart:(cfg:any)=>void}){
       </div>
       <button disabled={modes.length===0} onClick={()=>onStart({modes,diff,rounds,weakOnly:false})}
         className="px-8 py-3 rounded-2xl text-white font-bold text-lg shadow-lg hover:scale-105 active:scale-95 transition-transform"
-        style={{background:"linear-gradient(135deg,#7c3aed,#6d28d9)",opacity:modes.length===0?.4:1}}>
+        style={{background:"linear-gradient(135deg,#dc2626,#991b1b)",opacity:modes.length===0?.4:1}}>
         {t.ui.startPlay}
       </button>
     </div>
@@ -91,14 +92,14 @@ function SessionHelp({modes,onContinue}:{modes:string[],onContinue:()=>void}){
       <div className="flex flex-col gap-2 w-full max-w-sm" style={{animation:"slideUp .3s ease-out"}}>
         {MODES_META.filter(m=>modes.includes(m.id)).map(m=>(
           <div key={m.id} className="rounded-xl p-3 flex flex-col gap-1.5"
-            style={{backgroundColor:"rgba(255,255,255,.06)",border:"1px solid rgba(167,139,250,.25)"}}>
+            style={{backgroundColor:"rgba(255,255,255,.06)",border:"1px solid rgba(239,68,68,.25)"}}>
             <div className="flex items-center gap-2">
               <span style={{fontSize:20}}>{m.icon}</span>
               <span className="text-white font-bold text-sm">{(t.modes as any)[m.id].name}</span>
             </div>
             <ul className="flex flex-col gap-0.5">
               {((t.sessionHelp.tips as any)[m.id]||[]).map((tip:string,i:number)=>(
-                <li key={i} className="text-purple-200 text-xs leading-relaxed">• {tip}</li>
+                <li key={i} className="text-red-200 text-xs leading-relaxed">• {tip}</li>
               ))}
             </ul>
           </div>
@@ -106,7 +107,7 @@ function SessionHelp({modes,onContinue}:{modes:string[],onContinue:()=>void}){
       </div>
       <button onClick={onContinue}
         className="mt-1 px-8 py-3 rounded-2xl text-white font-bold text-lg shadow-lg hover:scale-105 active:scale-95 transition-transform"
-        style={{background:"linear-gradient(135deg,#7c3aed,#6d28d9)"}}>
+        style={{background:"linear-gradient(135deg,#dc2626,#991b1b)"}}>
         {t.ui.startPlay}
       </button>
       <button onClick={skipForever} className="text-xs text-center" style={{color:"rgba(255,255,255,.35)"}}>{t.ui.dontShow}</button>
@@ -125,7 +126,7 @@ function SessionRunner({config,audio,dispatch,streak,onFinish}:any){
   const C=REGISTRY[modeId];
   return(
     <div className="flex-1 flex flex-col">
-      <div className="px-4 pt-3 text-center text-purple-300 text-xs font-bold tracking-wide">{idx+1} / {config.rounds}</div>
+      <div className="px-4 pt-3 text-center text-red-300 text-xs font-bold tracking-wide">{idx+1} / {config.rounds}</div>
       <C key={idx} audio={audio} dispatch={dispatch} streak={streak} diff={config.diff} weakOnly={config.weakOnly} onAdvance={advance}/>
     </div>
   );
@@ -152,7 +153,7 @@ function SessionSummary({stats,xp,startStats,startXp,onDone}:any){
       <style>{CSS}</style>
       <span style={{fontSize:48}}>🏁</span>
       <h2 className="text-2xl font-bold text-white">{t.ui.sessionDone}</h2>
-      <div className="text-purple-300 text-lg">{pct}% ({dOk}/{dTotal})</div>
+      <div className="text-red-300 text-lg">{pct}% ({dOk}/{dTotal})</div>
       {diff!==null&&(
         <div className="text-sm font-bold" style={{color:diff>=0?"#34d399":"#f87171"}}>
           {diff>=0?"▲":"▼"} {Math.abs(diff)}% {t.ui.vsLastSession}
@@ -163,12 +164,12 @@ function SessionSummary({stats,xp,startStats,startXp,onDone}:any){
         {MODES_META.filter(m=>deltas[m.id]).map(m=>(
           <div key={m.id} className="flex items-center justify-between px-3 py-2 rounded-xl" style={{backgroundColor:"rgba(255,255,255,.06)"}}>
             <span className="text-white text-sm">{m.icon} {(t.modes as any)[m.id].name}</span>
-            <span className="text-purple-300 text-sm">{deltas[m.id].pct}% ({deltas[m.id].ok}/{deltas[m.id].total})</span>
+            <span className="text-red-300 text-sm">{deltas[m.id].pct}% ({deltas[m.id].ok}/{deltas[m.id].total})</span>
           </div>
         ))}
       </div>
       <button onClick={onDone} className="mt-2 px-8 py-3 rounded-2xl text-white font-bold text-lg"
-        style={{background:"linear-gradient(135deg,#7c3aed,#6d28d9)"}}>{t.ui.close}</button>
+        style={{background:"linear-gradient(135deg,#dc2626,#991b1b)"}}>{t.ui.close}</button>
     </div>
   );
 }
@@ -181,7 +182,7 @@ function NoWeakSpots({onDone}:{onDone:()=>void}){
       <span style={{fontSize:48}}>🎉</span>
       <div className="text-white text-lg text-center">{t.ui.noWeakSpots}</div>
       <button onClick={onDone} className="px-8 py-3 rounded-2xl text-white font-bold text-lg"
-        style={{background:"linear-gradient(135deg,#7c3aed,#6d28d9)"}}>{t.ui.close}</button>
+        style={{background:"linear-gradient(135deg,#dc2626,#991b1b)"}}>{t.ui.close}</button>
     </div>
   );
 }
